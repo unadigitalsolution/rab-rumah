@@ -22,7 +22,7 @@ jobs:
         run: |
           cd flutter
           if [ ! -d android ]; then
-            flutter create --platforms=android .
+               flutter create --platforms=android --project-name rab_rumahku .
           fi
 
       - name: Ambil dependencies
