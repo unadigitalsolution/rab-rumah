@@ -1,4 +1,4 @@
-name: Build APK
+name: Build RAB Rumahku APK
 
 on:
   push:
@@ -20,25 +20,43 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Buat file platform Android jika belum ada
+      - name: Verifikasi Flutter
+        run: flutter --version
+
+      - name: Buat Android platform
+        working-directory: flutter
         run: |
-          cd flutter
           if [ ! -d android ]; then
-            flutter create --project-name rab_rumahku --platforms=android .
+            flutter create \
+              --project-name rab_rumahku \
+              --platforms=android \
+              .
           fi
 
+      - name: Perbaiki Kotlin Gradle Plugin
+        working-directory: flutter
+        run: |
+          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.24"/' android/settings.gradle
+
+      - name: Tampilkan konfigurasi Android
+        working-directory: flutter
+        run: |
+          echo "=== settings.gradle ==="
+          cat android/settings.gradle
+          echo "=== gradle-wrapper.properties ==="
+          cat android/gradle/wrapper/gradle-wrapper.properties
+
       - name: Ambil dependencies
-        run: |
-          cd flutter
-          flutter pub get
+        working-directory: flutter
+        run: flutter pub get
 
-      - name: Build APK (release)
-        run: |
-          cd flutter
-          flutter build apk --release
+      - name: Build APK Release
+        working-directory: flutter
+        run: flutter build apk --release
 
-      - name: Upload APK sebagai artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: rab-rumahku-apk
           path: flutter/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
