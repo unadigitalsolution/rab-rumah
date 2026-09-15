@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout kode
         uses: actions/checkout@v4
@@ -17,12 +18,13 @@ jobs:
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
+          cache: true
 
       - name: Buat file platform Android jika belum ada
         run: |
           cd flutter
           if [ ! -d android ]; then
-            flutter create --platforms=android .
+            flutter create --project-name rab_rumahku --platforms=android .
           fi
 
       - name: Ambil dependencies
