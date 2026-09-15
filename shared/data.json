@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 2,
+  "houseTypes": [
+    {"id":"21","name":"Tipe 21","area":21,"length":3.5,"width":6,"bedrooms":1,"bathrooms":1,"floors":1,"style":"Minimalis"},
+    {"id":"36","name":"Tipe 36","area":36,"length":6,"width":6,"bedrooms":2,"bathrooms":1,"floors":1,"style":"Minimalis"},
+    {"id":"45","name":"Tipe 45","area":45,"length":7.5,"width":6,"bedrooms":2,"bathrooms":1,"floors":1,"style":"Minimalis"},
+    {"id":"60","name":"Tipe 60","area":60,"length":10,"width":6,"bedrooms":3,"bathrooms":2,"floors":1,"style":"Modern"},
+    {"id":"72","name":"Tipe 72","area":72,"length":12,"width":6,"bedrooms":3,"bathrooms":2,"floors":1,"style":"Modern"},
+    {"id":"90","name":"Tipe 90","area":90,"length":10,"width":9,"bedrooms":3,"bathrooms":2,"floors":2,"style":"Modern"},
+    {"id":"120","name":"Tipe 120","area":120,"length":10,"width":12,"bedrooms":4,"bathrooms":3,"floors":2,"style":"Modern"},
+    {"id":"200","name":"Tipe 200","area":200,"length":10,"width":20,"bedrooms":5,"bathrooms":4,"floors":2,"style":"Luxury"},
+    {"id":"cluster","name":"Cluster","area":60,"length":10,"width":6,"bedrooms":3,"bathrooms":2,"floors":2,"style":"Cluster"},
+    {"id":"villa","name":"Villa Tropis","area":90,"length":10,"width":9,"bedrooms":3,"bathrooms":2,"floors":1,"style":"Tropis"},
+    {"id":"scandi","name":"Scandinavian","area":72,"length":12,"width":6,"bedrooms":3,"bathrooms":2,"floors":1,"style":"Scandinavian"},
+    {"id":"industrial","name":"Industrial","area":72,"length":12,"width":6,"bedrooms":3,"bathrooms":2,"floors":2,"style":"Industrial"},
+    {"id":"smart","name":"Smart Home","area":90,"length":10,"width":9,"bedrooms":3,"bathrooms":2,"floors":2,"style":"Smart"}
+  ],
+  "materialOptions": {
+    "wall":[{"id":"lightbrick","label":"Bata Ringan","note":"Cepat dipasang dan ringan"},{"id":"brick","label":"Bata Merah","note":"Tradisional dan padat"}],
+    "floor":[{"id":"tile","label":"Keramik 60×60","note":"Ekonomis"},{"id":"granite","label":"Granit 60×60","note":"Premium"}],
+    "roofCover":[{"id":"genteng","label":"Genteng Beton","note":"Konvensional"},{"id":"metal","label":"Spandek","note":"Ringan"}],
+    "ceiling":[{"id":"gypsum","label":"Gypsum","note":"Halus untuk interior"},{"id":"grc","label":"GRC","note":"Lebih tahan lembap"}]
+  }
+}

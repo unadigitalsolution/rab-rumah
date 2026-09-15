@@ -1,0 +1,39 @@
+{
+  "name": "rab-rumahku",
+  "version": "3.0.2",
+  "description": "RAB Rumahku Pro - integrated building editor, adaptive 3D, RAB, material aggregation and reports",
+  "main": "src/main.js",
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "start": "electron .",
+    "test": "node ../tests/engine.test.js",
+    "dist": "electron-builder --win nsis msix"
+  },
+  "devDependencies": {
+    "electron": "^38.1.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "exceljs": "^4.4.0",
+    "pdfkit": "^0.17.2"
+  },
+  "build": {
+    "appId": "id.rabrumahku.app",
+    "productName": "RAB Rumahku",
+    "files": [
+      "src/**/*",
+      "../shared/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "msix"
+      ],
+      "artifactName": "RAB-Rumahku-${version}.${ext}"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
