@@ -1,0 +1,42 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Buat file platform Android jika belum ada
+        run: |
+          cd flutter
+          if [ ! -d android ]; then
+            flutter create --platforms=android .
+          fi
+
+      - name: Ambil dependencies
+        run: |
+          cd flutter
+          flutter pub get
+
+      - name: Build APK (release)
+        run: |
+          cd flutter
+          flutter build apk --release
+
+      - name: Upload APK sebagai artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rab-rumahku-apk
+          path: flutter/build/app/outputs/flutter-apk/app-release.apk
