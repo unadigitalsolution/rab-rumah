@@ -1,14 +1,52 @@
-name: rab_rumahku
-description: RAB Rumahku offline-first mobile client
-publish_to: 'none'
-version: 1.0.0+1
-environment:
-  sdk: '>=3.3.0 <4.0.0'
-dependencies:
-  flutter:
-    sdk: flutter
-  shared_preferences: ^2.5.3
-  path_provider: ^2.1.5
-  intl: ^0.20.2
-flutter:
-  uses-material-design: true
+name: Build RAB Rumahku APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Verifikasi Flutter
+        run: |
+          flutter --version
+
+      - name: Siapkan Android platform
+        working-directory: flutter
+        run: |
+          if [ ! -d android ]; then
+            flutter create \
+              --project-name rab_rumahku \
+              --platforms=android \
+              .
+          else
+            echo "Folder android sudah ada, tidak perlu flutter create."
+          fi
+
+      - name: Ambil dependencies
+        working-directory: flutter
+        run: flutter pub get
+
+      - name: Build APK Release
+        working-directory: flutter
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: rab-rumahku-apk
+          path: flutter/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
