@@ -23,6 +23,12 @@ jobs:
         working-directory: flutter
         run: flutter create . --platforms=android --org com.unadigitalsolution --project-name rab_rumahku
 
+      - name: Sinkronisasi Kotlin Gradle plugin
+        working-directory: flutter
+        run: |
+          sed -i 's/1.7.10/1.9.24/g' android/settings.gradle android/build.gradle 2>/dev/null || true
+          grep -R "kotlin" android/settings.gradle android/build.gradle || true
+
       - name: Ambil dependencies
         working-directory: flutter
         run: flutter pub get
