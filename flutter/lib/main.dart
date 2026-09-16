@@ -1,206 +1,79 @@
+import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(const RabApp());
+void main() => runApp(const RabRumahApp());
+String money(num n) => 'Rp${NumberFormat('#,##0', 'id_ID').format(n.round())}';
 
-String rp(num n) => 'Rp${NumberFormat('#,##0', 'id_ID').format(n.round())}';
-
-class RabApp extends StatefulWidget {
-  const RabApp({super.key});
-
-  @override
-  State<RabApp> createState() => _RabAppState();
+class RabRumahApp extends StatefulWidget { const RabRumahApp({super.key}); @override State<RabRumahApp> createState()=>_AppState(); }
+class _AppState extends State<RabRumahApp> {
+  int page=0; Map<String,dynamic> profile={'name':'RAB Rumahku','logo':'','address':'','contact':''};
+  List<Map<String,dynamic>> projects=[]; List<Map<String,dynamic>> materials=[];
+  @override void initState(){super.initState(); _load();}
+  Future<void> _load() async { final s=await SharedPreferences.getInstance(); setState((){
+    final p=s.getString('profile'); if(p!=null) profile=Map<String,dynamic>.from(jsonDecode(p));
+    final x=s.getString('projects'); if(x!=null) projects=List<Map<String,dynamic>>.from((jsonDecode(x) as List).map((e)=>Map<String,dynamic>.from(e)));
+    final m=s.getString('materials'); if(m!=null) materials=List<Map<String,dynamic>>.from((jsonDecode(m) as List).map((e)=>Map<String,dynamic>.from(e)));
+    if(materials.isEmpty) materials=[
+      {'name':'Semen','unit':'zak','price':55000.0,'category':'Struktur'}, {'name':'Pasir','unit':'m³','price':250000.0,'category':'Struktur'},
+      {'name':'Bata ringan','unit':'pcs','price':9000.0,'category':'Dinding'}, {'name':'Keramik lantai','unit':'m²','price':85000.0,'category':'Lantai'},
+      {'name':'Besi beton 10 mm','unit':'batang','price':75000.0,'category':'Struktur'}, {'name':'Cat tembok','unit':'kg','price':55000.0,'category':'Finishing'},
+    ]; }); }
+  Future<void> saveAll() async { final s=await SharedPreferences.getInstance(); await s.setString('profile',jsonEncode(profile)); await s.setString('projects',jsonEncode(projects)); await s.setString('materials',jsonEncode(materials)); }
+  void nav(int i){setState(()=>page=i);}
+  @override Widget build(BuildContext context)=>MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData(useMaterial3:true,colorSchemeSeed:Colors.indigo),home:Scaffold(
+    appBar:AppBar(title:Text(profile['name']??'RAB Rumahku'),actions:[IconButton(tooltip:'Kalkulator',icon:const Icon(Icons.calculate_outlined),onPressed:()=>nav(7)),IconButton(tooltip:'Kwitansi',icon:const Icon(Icons.receipt_long_outlined),onPressed:()=>nav(8))]),
+    drawer:_drawer(),body:_pages()[page],
+    bottomNavigationBar:NavigationBar(selectedIndex:page.clamp(0,4),onDestinationSelected:nav,destinations:const[
+      NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:'Beranda'),NavigationDestination(icon:Icon(Icons.add_box_outlined),label:'Buat RAB'),NavigationDestination(icon:Icon(Icons.folder_outlined),label:'Proyek'),NavigationDestination(icon:Icon(Icons.inventory_2_outlined),label:'Material'),NavigationDestination(icon:Icon(Icons.more_horiz),label:'Lainnya')])));
+  Drawer _drawer()=>Drawer(child:SafeArea(child:ListView(children:[Padding(padding:const EdgeInsets.all(20),child:Text(profile['name']??'RAB Rumahku',style:Theme.of(context).textTheme.titleLarge)),const Divider(),_item(0,Icons.home,'Beranda'),_item(1,Icons.add_box,'Buat RAB'),_item(2,Icons.folder,'Proyek Saya'),_item(3,Icons.image,'Galeri'),_item(4,Icons.inventory,'Material'),_item(5,Icons.assessment,'Laporan'),_item(6,Icons.settings,'Pengaturan'),const Divider(),_item(7,Icons.calculate,'Kalkulator'),_item(8,Icons.receipt_long,'Kwitansi'),const Padding(padding:EdgeInsets.all(16),child:Text('Offline-first • RAB Rumahku Pro',style:TextStyle(color:Colors.grey)))])));
+  Widget _item(int i,IconData icon,String title)=>ListTile(leading:Icon(icon),title:Text(title),selected:page==i,onTap:(){Navigator.pop(context);nav(i);});
+  List<Widget> _pages()=>[_home(),_rab(),_projects(),_materials(),_more(),_report(),_settings(),const CalculatorPage(),const ReceiptPage()];
+  Widget _home()=>ListView(padding:const EdgeInsets.all(16),children:[Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('PERENCANAAN RUMAH',style:Theme.of(context).textTheme.labelLarge),const SizedBox(height:6),Text('Denah → material → RAB → maket',style:Theme.of(context).textTheme.headlineSmall),const SizedBox(height:12),Text('Kelola proyek konstruksi dari satu data sumber. Data tersimpan lokal di perangkat.'),const SizedBox(height:18),FilledButton.icon(onPressed:()=>nav(1),icon:const Icon(Icons.add),label:const Text('BUAT PROYEK BARU'))]))),
+    _stats(),const SizedBox(height:12),Text('Proyek Terakhir',style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:8),if(projects.isEmpty) const Card(child:ListTile(title:Text('Belum ada proyek'),subtitle:Text('Buat proyek pertama untuk mulai menghitung RAB.'))) else ...projects.take(5).map((p)=>Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.home)),title:Text(p['name']??'-'),subtitle:Text('Tipe ${p['houseType']??'custom'} • ${p['location']??''}'),trailing:Text(money(p['total']??0)),onTap:()=>showDialog(context:context,builder:(_)=>ProjectDetail(project:p))))),const SizedBox(height:12),Card(child:ListTile(leading:const Icon(Icons.shield_outlined),title:const Text('Lisensi'),subtitle:const Text('Mode lokal • lisensi dapat diaktifkan pada Pengaturan'),onTap:()=>nav(6))) ]);
+  Widget _stats()=>Row(children:[Expanded(child:_stat('Proyek',projects.length.toString(),Icons.folder)),Expanded(child:_stat('Material',materials.length.toString(),Icons.inventory)),Expanded(child:_stat('Nilai RAB',money(projects.fold<double>(0,(a,p)=>a+(p['total']??0))),Icons.payments))]);
+  Widget _stat(String a,String b,IconData i)=>Card(child:Padding(padding:const EdgeInsets.all(10),child:Column(children:[Icon(i),const SizedBox(height:4),Text(b,style:const TextStyle(fontWeight:FontWeight.bold)),Text(a,style:const TextStyle(fontSize:11))])));
+  Widget _rab()=>ProjectEditor(onSave:(p){setState((){projects.insert(0,p);});saveAll();nav(2);});
+  Widget _projects()=>ListView(padding:const EdgeInsets.all(16),children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text('Proyek Saya',style:Theme.of(context).textTheme.headlineSmall),FilledButton.icon(onPressed:()=>nav(1),icon:const Icon(Icons.add),label:const Text('Baru'))]),const SizedBox(height:12),if(projects.isEmpty) const Card(child:Padding(padding:EdgeInsets.all(20),child:Text('Belum ada proyek.'))) else ...projects.asMap().entries.map((e)=>Card(child:ListTile(leading:const Icon(Icons.home_work_outlined),title:Text(e.value['name']??'-'),subtitle:Text('${e.value['location']??''} • ${e.value['area']??0} m²'),trailing:PopupMenuButton<String>(onSelected:(v){if(v=='delete'){setState(()=>projects.removeAt(e.key));saveAll();}else if(v=='report'){nav(5);}},itemBuilder:(_)=>const[PopupMenuItem(value:'report',child:Text('Lihat laporan')),PopupMenuItem(value:'delete',child:Text('Hapus'))]),onTap:()=>showDialog(context:context,builder:(_)=>ProjectDetail(project:e.value))))]);
+  Widget _materials()=>MaterialManager(materials:materials,onChanged:(m){setState(()=>materials=m);saveAll();});
+  Widget _more()=>ListView(padding:const EdgeInsets.all(16),children:[Text('Fitur Lainnya',style:Theme.of(context).textTheme.headlineSmall),const SizedBox(height:12),_feature(7,Icons.calculate,'Kalkulator','Hitung luas, volume dan kebutuhan dasar'),_feature(8,Icons.receipt_long,'Kwitansi','Kwitansi pembayaran sederhana'),_feature(5,Icons.assessment,'Laporan','Ringkasan RAB dan proyek'),_feature(6,Icons.settings,'Pengaturan','Identitas usaha, logo, alamat, kontak, lisensi'),_feature(4,Icons.image,'Galeri','Dokumentasi proyek dan referensi'),]);
+  Widget _feature(int i,IconData icon,String t,String s)=>Card(child:ListTile(leading:CircleAvatar(child:Icon(icon)),title:Text(t),subtitle:Text(s),trailing:const Icon(Icons.chevron_right),onTap:()=>nav(i)));
+  Widget _report()=>ReportPage(projects:projects,profile:profile);
+  Widget _settings()=>SettingsPage(profile:profile,onSave:(p){setState(()=>profile=p);saveAll();});
 }
 
-class _RabAppState extends State<RabApp> {
-  int nav = 0;
-  Map<String, dynamic> project = {
-    'schemaVersion': 1,
-    'name': 'Rumah Baru',
-    'land': {'length': 10.0, 'width': 15.0},
-    'building': {'area': 36.0, 'bedrooms': 2, 'bathrooms': 1},
-    'rooms': [],
-    'extras': {'overhead': 5.0, 'contingency': 5.0},
-  };
-  double total = 0;
-
-  void calc() {
-    final a = (project['building']['area'] as num).toDouble();
-    final base = a * 4000000;
-    total = base * 1.10;
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext c) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('🏠 RAB Rumahku'),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Center(child: Text(rp(0))),
-            ),
-          ],
-        ),
-        body: _body(),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: nav,
-          onDestinationSelected: (i) => setState(() => nav = i),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              label: 'Beranda',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.add_box_outlined),
-              label: 'Buat RAB',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.folder_outlined),
-              label: 'Proyek',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.inventory_2_outlined),
-              label: 'Material',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.more_horiz),
-              label: 'Lainnya',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _body() {
-    if (nav == 0) return _home();
-    if (nav == 1) return _wizard();
-    if (nav == 2) return const Center(child: Text('Proyek tersimpan lokal'));
-    if (nav == 3) return _materials();
-    return const Center(child: Text('RAB Rumahku • Offline-first'));
-  }
-
-  Widget _home() => ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            'Buat RAB rumah dengan mudah.',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: () {
-              setState(() => nav = 1);
-              calc();
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('BUAT RAB RUMAH'),
-          ),
-          const SizedBox(height: 20),
-          Card(
-            child: ListTile(
-              title: Text(project['name']),
-              subtitle: Text('Tipe ${project['building']['area'].toInt()} m²'),
-              trailing: Text(rp(total)),
-            ),
-          ),
-        ],
-      );
-
-  Widget _wizard() => ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            'Data Lahan',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          TextField(
-            decoration: const InputDecoration(labelText: 'Nama proyek'),
-            controller: TextEditingController(text: project['name']),
-            onChanged: (v) => project['name'] = v,
-          ),
-          TextField(
-            decoration: const InputDecoration(labelText: 'Panjang lahan'),
-            keyboardType: TextInputType.number,
-            onChanged: (v) =>
-                project['land']['length'] = double.tryParse(v) ?? 10,
-          ),
-          TextField(
-            decoration: const InputDecoration(labelText: 'Lebar lahan'),
-            keyboardType: TextInputType.number,
-            onChanged: (v) =>
-                project['land']['width'] = double.tryParse(v) ?? 15,
-          ),
-          const SizedBox(height: 15),
-          Text(
-            'Luas lahan ${(project['land']['length'] * project['land']['width']).toStringAsFixed(1)} m²',
-          ),
-          const SizedBox(height: 15),
-          Text(
-            'Luas bangunan',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          Slider(
-            value: (project['building']['area'] as num)
-                .toDouble()
-                .clamp(21, 200),
-            min: 21,
-            max: 200,
-            divisions: 179,
-            label: '${project['building']['area']}',
-            onChanged: (v) {
-              project['building']['area'] = v;
-              calc();
-            },
-          ),
-          Card(
-            child: ListTile(
-              title: const Text('Estimasi RAB'),
-              trailing: Text(rp(total)),
-            ),
-          ),
-          FilledButton(
-            onPressed: calc,
-            child: const Text('Hitung Ulang'),
-          ),
-        ],
-      );
-
-  Widget _materials() => ListView(
-        padding: const EdgeInsets.all(20),
-        children: const [
-          Text(
-            'Master Material',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          ListTile(
-            title: Text('Semen'),
-            subtitle: Text('Struktur • zak'),
-            trailing: Text('Rp55.000'),
-          ),
-          ListTile(
-            title: Text('Pasir'),
-            subtitle: Text('Struktur • m³'),
-            trailing: Text('Rp250.000'),
-          ),
-          ListTile(
-            title: Text('Bata ringan'),
-            subtitle: Text('Dinding • pcs'),
-            trailing: Text('Rp9.000'),
-          ),
-          ListTile(
-            title: Text('Keramik lantai'),
-            subtitle: Text('Lantai • m²'),
-            trailing: Text('Rp85.000'),
-          ),
-        ],
-      );
+class ProjectEditor extends StatefulWidget { final ValueChanged<Map<String,dynamic>> onSave; const ProjectEditor({super.key,required this.onSave}); @override State<ProjectEditor> createState()=>_ProjectEditorState(); }
+class _ProjectEditorState extends State<ProjectEditor>{int step=0; final name=TextEditingController(text:'Rumah Baru'),owner=TextEditingController(),location=TextEditingController(),note=TextEditingController(); double bl=6,bw=6,height=3,roof=30,overhang=.5,terrace=5,carport=12; int floors=1,bed=2,bath=1,doors=4,windows=5; String wall='Bata ringan',floor='Keramik',roofCover='Genteng',roofType='Pelana'; final rooms=<RoomData>[]; bool topView=false; 
+  double get area=>bl*bw*floors; double get landArea=>10*15;
+  double estimate(){final structure=area*2400000;final wallCost=area*450000;final floorCost=area*250000;final roofCost=area*450000;final openings=(doors*850000)+(windows*450000);final labor=area*850000;final material=structure+wallCost+floorCost+roofCost+openings;return material+labor+(material*.05)+(material*.05);}
+  @override void dispose(){for(final x in [name,owner,location,note])x.dispose();super.dispose();}
+  void makeRooms(){rooms.clear();for(int i=0;i<bed;i++)rooms.add(RoomData('Kamar ${i+1}',i%2*3.0,(i~/2)*3.0,3,3));rooms.add(RoomData('Ruang Tamu',3,0,3,3));rooms.add(RoomData('Dapur',3,3,3,2.5));rooms.add(RoomData('Kamar Mandi',bl-1.8,bw-2,1.8,2));}
+  void finish(){if(rooms.isEmpty)makeRooms();widget.onSave({'id':DateTime.now().microsecondsSinceEpoch.toString(),'name':name.text.trim().isEmpty?'Rumah Baru':name.text.trim(),'owner':owner.text,'location':location.text,'note':note.text,'houseType':'custom','area':area,'landArea':landArea,'length':bl,'width':bw,'floors':floors,'wallHeight':height,'roofType':roofType,'bedrooms':bed,'bathrooms':bath,'doors':doors,'windows':windows,'wall':wall,'floor':floor,'roofCover':roofCover,'rooms':rooms.map((r)=>r.toJson()).toList(),'total':estimate(),'createdAt':DateTime.now().toIso8601String()});}
+  @override Widget build(BuildContext context){final titles=['Data Proyek','Denah & Dimensi','Spesifikasi','Material & Harga','RAB Detail','Maket 3D','Laporan'];return ListView(padding:const EdgeInsets.all(16),children:[Text('Buat RAB',style:Theme.of(context).textTheme.headlineSmall),const SizedBox(height:10),SingleChildScrollView(scrollDirection:Axis.horizontal,child:Row(children:List.generate(titles.length,(i)=>Padding(padding:const EdgeInsets.only(right:6),child:ChoiceChip(label:Text('${i+1}. ${titles[i]}'),selected:step==i,onSelected:(_){setState(()=>step=i);}))))),const SizedBox(height:14),_stepBody(),const SizedBox(height:20),Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[if(step>0)OutlinedButton(onPressed:()=>setState(()=>step--),child:const Text('Kembali')) else const SizedBox(),FilledButton(onPressed:(){if(step<6)setState(()=>step++);else finish();},child:Text(step==6?'Simpan Proyek':'Lanjut'))])]);}
+  Widget field(String label,TextEditingController c,{bool number=false})=>TextField(controller:c,keyboardType:number?TextInputType.number:null,decoration:InputDecoration(labelText:label,border:const OutlineInputBorder()));
+  Widget numField(String label,double value,ValueChanged<double> cb)=>TextFormField(initialValue:value.toString(),keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:label,border:const OutlineInputBorder()),onChanged:(v)=>cb(double.tryParse(v)??value));
+  Widget _stepBody(){if(step==0)return Column(children:[field('Nama proyek',name),const SizedBox(height:10),field('Pemilik',owner),const SizedBox(height:10),field('Lokasi',location),const SizedBox(height:10),field('Catatan',note)]);if(step==1)return Column(children:[Row(children:[Expanded(child:numField('Panjang bangunan (m)',bl,(v)=>setState(()=>bl=v))),const SizedBox(width:10),Expanded(child:numField('Lebar bangunan (m)',bw,(v)=>setState(()=>bw=v)))]),const SizedBox(height:10),Row(children:[Expanded(child:numField('Tinggi dinding',height,(v)=>setState(()=>height=v))),const SizedBox(width:10),Expanded(child:numField('Overstek',overhang,(v)=>setState(()=>overhang=v)))]),const SizedBox(height:10),Row(children:[Expanded(child:DropdownButtonFormField<int>(value:floors,decoration:const InputDecoration(labelText:'Jumlah lantai',border:OutlineInputBorder()),items:[1,2,3].map((x)=>DropdownMenuItem(value:x,child:Text('$x'))).toList(),onChanged:(v)=>setState(()=>floors=v??1))),const SizedBox(width:10),Expanded(child:numField('Luas teras',terrace,(v)=>setState(()=>terrace=v)))]),const SizedBox(height:12),Card(child:ListTile(title:const Text('Luas bangunan'),trailing:Text('${area.toStringAsFixed(2)} m²'))),Card(child:ListTile(title:const Text('Luas lahan contoh'),trailing:Text('${landArea.toStringAsFixed(2)} m²')))]);if(step==2)return Column(children:[_select('Dinding',wall,['Bata ringan','Bata merah','Batako'],(v)=>setState(()=>wall=v!)),const SizedBox(height:10),_select('Lantai',floor,['Keramik','Granit','Vinyl','Beton'],(v)=>setState(()=>floor=v!)),const SizedBox(height:10),_select('Penutup atap',roofCover,['Genteng','Metal','Spandek','Dak beton'],(v)=>setState(()=>roofCover=v!)),const SizedBox(height:10),_select('Bentuk atap',roofType,['Pelana','Limas','Datar'],(v)=>setState(()=>roofType=v!)),const SizedBox(height:10),Row(children:[Expanded(child:numField('Kamar tidur',bed.toDouble(),(v)=>setState(()=>bed=v.round().clamp(0,20)))),const SizedBox(width:10),Expanded(child:numField('Kamar mandi',bath.toDouble(),(v)=>setState(()=>bath=v.round().clamp(0,10))))])]);if(step==3)return Column(children:[Text('Bukaan dan parameter material',style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:10),Row(children:[Expanded(child:numField('Pintu',doors.toDouble(),(v)=>setState(()=>doors=v.round().clamp(1,50)))),const SizedBox(width:10),Expanded(child:numField('Jendela',windows.toDouble(),(v)=>setState(()=>windows=v.round().clamp(1,100))))]),const SizedBox(height:14),...['Semen','Pasir','Bata ringan','Keramik','Besi beton','Cat'].map((x)=>ListTile(title:Text(x),subtitle:const Text('Harga referensi dapat diubah di menu Material')))]);if(step==4){final e=estimate();return Column(children:[_line('Luas bangunan', '${area.toStringAsFixed(2)} m²'),_line('Pekerjaan struktur',money(area*2400000)),_line('Dinding',money(area*450000)),_line('Lantai',money(area*250000)),_line('Atap',money(area*450000)),_line('Pintu & jendela',money((doors*850000)+(windows*450000))),_line('Tenaga kerja',money(area*850000)),_line('Waste + overhead',money((area*2400000+area*450000+area*250000+area*450000)*.10)),const Divider(),_line('TOTAL ESTIMASI',money(e),bold:true),const SizedBox(height:8),const Text('Estimasi referensi. Harga aktual dapat disesuaikan menurut lokasi dan spesifikasi.')]);}if(step==5)return Column(children:[Row(children:[FilterChip(label:const Text('Tampak atas tanpa genteng'),selected:topView,onSelected:(v)=>setState(()=>topView=v)),const SizedBox(width:8),Text(topView?'Interior terlihat':'Atap terlihat')]),const SizedBox(height:12),SizedBox(height:360,child:InteractiveHouse(rooms:rooms,isRoofHidden:topView,onMove:(i,x,y){setState((){rooms[i].x=x;rooms[i].y=y;});})),const SizedBox(height:8),const Text('Geser ruangan untuk mengatur denah. Tampilan ini menjadi dasar maket dan perhitungan.')]);return Column(children:[const Icon(Icons.assessment_outlined,size:64),Text('Laporan siap dibuat setelah proyek disimpan.'),const SizedBox(height:10),Card(child:ListTile(title:Text(name.text),subtitle:Text('Total ${money(estimate())}')))]);}
+  Widget _select(String label,String value,List<String> items,ValueChanged<String?> cb)=>DropdownButtonFormField<String>(value:value,decoration:InputDecoration(labelText:label,border:const OutlineInputBorder()),items:items.map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:cb);
+  Widget _line(String a,String b,{bool bold=false})=>Padding(padding:const EdgeInsets.symmetric(vertical:5),child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(a,style:TextStyle(fontWeight:bold?FontWeight.bold:null)),Text(b,style:TextStyle(fontWeight:bold?FontWeight.bold:null))]));
 }
+class RoomData {String name;double x,y,w,h;RoomData(this.name,this.x,this.y,this.w,this.h);Map<String,dynamic> toJson()=>{'name':name,'x':x,'y':y,'width':w,'height':h};}
+class InteractiveHouse extends StatefulWidget {final List<RoomData> rooms;final bool isRoofHidden;final void Function(int,double,double) onMove;const InteractiveHouse({super.key,required this.rooms,required this.isRoofHidden,required this.onMove});@override State<InteractiveHouse> createState()=>_HouseState();}
+class _HouseState extends State<InteractiveHouse>{int? drag;Offset? start;double sx=0,sy=0;@override Widget build(BuildContext c)=>LayoutBuilder(builder:(c,box){final sc=math.min((box.maxWidth-30)/6,(box.maxHeight-30)/6);return Container(decoration:BoxDecoration(border:Border.all(color:Colors.grey),borderRadius:BorderRadius.circular(12)),child:Stack(children:[if(!widget.isRoofHidden)Positioned.fill(child:CustomPaint(painter:RoofPainter())),...widget.rooms.asMap().entries.map((e)=>Positioned(left:10+e.value.x*sc,top:10+e.value.y*sc,width:e.value.w*sc,height:e.value.h*sc,child:GestureDetector(onPanStart:(d){drag=e.key;start=d.globalPosition;sx=e.value.x;sy=e.value.y;},onPanUpdate:(d){if(drag==e.key){final dx=(d.globalPosition-start!).dx/sc,dy=(d.globalPosition-start!).dy/sc;widget.onMove(e.key,(sx+dx).clamp(0,6-e.value.w),(sy+dy).clamp(0,6-e.value.h);setState((){});}},onPanEnd:(_){drag=null;},child:Container(decoration:BoxDecoration(border:Border.all(),color:Theme.of(c).colorScheme.surface.withOpacity(.9)),child:Center(child:Text(e.value.name,textAlign:TextAlign.center,style:const TextStyle(fontSize:11))))))])});}
+}
+class RoofPainter extends CustomPainter{@override void paint(Canvas c,Size s){final p=Paint()..style=PaintingStyle.fill..color=Colors.brown.withOpacity(.18);final path=Path()..moveTo(s.width*.1,s.height*.2)..lineTo(s.width*.5,s.height*.05)..lineTo(s.width*.9,s.height*.2)..lineTo(s.width*.82,s.height*.85)..lineTo(s.width*.18,s.height*.85)..close();c.drawPath(path,p);}@override bool shouldRepaint(covariant CustomPainter old)=>false;}
+
+class MaterialManager extends StatefulWidget{final List<Map<String,dynamic>> materials;final ValueChanged<List<Map<String,dynamic>>> onChanged;const MaterialManager({super.key,required this.materials,required this.onChanged});@override State<MaterialManager> createState()=>_MaterialState();}
+class _MaterialState extends State<MaterialManager>{String q='';void add(){final n=TextEditingController(),u=TextEditingController(text:'unit'),p=TextEditingController(text:'0');showDialog(context:context,builder:(_)=>AlertDialog(title:const Text('Tambah Material'),content:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:n,decoration:const InputDecoration(labelText:'Nama')),TextField(controller:u,decoration:const InputDecoration(labelText:'Satuan')),TextField(controller:p,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Harga'))]),actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Batal')),FilledButton(onPressed:(){widget.materials.add({'name':n.text,'unit':u.text,'price':double.tryParse(p.text.replaceAll('.',''))??0,'category':'Umum'});widget.onChanged(widget.materials);setState((){});Navigator.pop(context);},child:const Text('Simpan'))]));}
+@override Widget build(BuildContext c){final list=widget.materials.where((m)=>('${m['name']} ${m['category']}').toLowerCase().contains(q.toLowerCase())).toList();return ListView(padding:const EdgeInsets.all(16),children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text('Master Material',style:Theme.of(context).textTheme.headlineSmall),FilledButton.icon(onPressed:add,icon:const Icon(Icons.add),label:const Text('Tambah'))]),const SizedBox(height:10),TextField(onChanged:(v)=>setState(()=>q=v),decoration:const InputDecoration(prefixIcon:Icon(Icons.search),labelText:'Cari material',border:OutlineInputBorder())),const SizedBox(height:10),...list.asMap().entries.map((e)=>Card(child:ListTile(title:Text(e.value['name']??'-'),subtitle:Text('${e.value['category']??'Umum'} • ${e.value['unit']??'-'}'),trailing:Text(money(e.value['price']??0)),onLongPress:(){setState(()=>widget.materials.remove(e.value));widget.onChanged(widget.materials);}}))];}}
+
+class ReportPage extends StatelessWidget{final List<Map<String,dynamic>> projects;final Map<String,dynamic> profile;const ReportPage({super.key,required this.projects,required this.profile});@override Widget build(BuildContext c){final total=projects.fold<double>(0,(a,p)=>a+(p['total']??0));return ListView(padding:const EdgeInsets.all(16),children:[Text('Laporan',style:Theme.of(c).textTheme.headlineSmall),Card(child:ListTile(title:Text(profile['name']??''),subtitle:Text('${profile['address']??''}\n${profile['contact']??''}'))),Card(child:ListTile(title:const Text('Total seluruh proyek'),trailing:Text(money(total),style:const TextStyle(fontWeight:FontWeight.bold)))),const SizedBox(height:10),...projects.map((p)=>Card(child:ListTile(title:Text(p['name']??'-'),subtitle:Text('Luas ${p['area']??0} m² • ${p['location']??''}'),trailing:Text(money(p['total']??0)))))];}}
+class ProjectDetail extends StatelessWidget{final Map<String,dynamic> project;const ProjectDetail({super.key,required this.project});@override Widget build(BuildContext c)=>AlertDialog(title:Text(project['name']??'-'),content:SingleChildScrollView(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Pemilik: ${project['owner']??''}'),Text('Lokasi: ${project['location']??''}'),Text('Luas: ${project['area']??0} m²'),Text('Lantai: ${project['floors']??1}'),Text('Kamar: ${project['bedrooms']??0} / KM ${project['bathrooms']??0}'),Text('Spesifikasi: ${project['wall']}, ${project['floor']}, ${project['roofCover']}'),const Divider(),Text('TOTAL: ${money(project['total']??0)}',style:const TextStyle(fontWeight:FontWeight.bold))])),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Tutup'))]);}}
+class SettingsPage extends StatefulWidget{final Map<String,dynamic> profile;final ValueChanged<Map<String,dynamic>> onSave;const SettingsPage({super.key,required this.profile,required this.onSave});@override State<SettingsPage> createState()=>_SettingsState();}
+class _SettingsState extends State<SettingsPage>{late TextEditingController n,a,k,l;@override void initState(){super.initState();n=TextEditingController(text:widget.profile['name']);a=TextEditingController(text:widget.profile['address']);k=TextEditingController(text:widget.profile['contact']);l=TextEditingController(text:widget.profile['logo']);}@override void dispose(){n.dispose();a.dispose();k.dispose();l.dispose();super.dispose();}@override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(16),children:[Text('Pengaturan',style:Theme.of(c).textTheme.headlineSmall),const SizedBox(height:12),const Text('Identitas usaha / perusahaan',style:TextStyle(fontWeight:FontWeight.bold)),const SizedBox(height:10),TextField(controller:n,decoration:const InputDecoration(labelText:'Nama CV / perusahaan',border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:l,decoration:const InputDecoration(labelText:'URL/path logo (opsional)',border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:a,maxLines:2,decoration:const InputDecoration(labelText:'Alamat',border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:k,decoration:const InputDecoration(labelText:'Kontak',border:OutlineInputBorder())),const SizedBox(height:16),FilledButton.icon(onPressed:(){widget.onSave({'name':n.text.trim().isEmpty?'RAB Rumahku':n.text.trim(),'logo':l.text,'address':a.text,'contact':k.text});ScaffoldMessenger.of(c).showSnackBar(const SnackBar(content:Text('Identitas tersimpan.')));},icon:const Icon(Icons.save),label:const Text('Simpan Identitas')),const SizedBox(height:20),Card(child:ListTile(leading:const Icon(Icons.verified_user_outlined),title:const Text('Lisensi aplikasi'),subtitle:const Text('Status: mode lokal / belum terhubung server lisensi'),trailing:OutlinedButton(onPressed:()=>showDialog(context:c,builder:(_)=>const AlertDialog(title:Text('Lisensi'),content:Text('Sistem lisensi disiapkan sebagai modul terpisah agar fitur independen tetap dapat dikontrol tanpa mengganggu data proyek.'),actions:[])),child:const Text('Info')))),]);}
+
+class CalculatorPage extends StatefulWidget{const CalculatorPage({super.key});@override State<CalculatorPage> createState()=>_CalcState();}
+class _CalcState extends State<CalculatorPage>{final a=TextEditingController(),b=TextEditingController(),h=TextEditingController();String mode='Luas persegi panjang';double result=0;@override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(16),children:[Text('Kalkulator',style:Theme.of(c).textTheme.headlineSmall),const SizedBox(height:12),DropdownButtonFormField<String>(value:mode,items:['Luas persegi panjang','Volume beton','Luas segitiga'].map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(v)=>setState(()=>mode=v!),decoration:const InputDecoration(border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:a,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Nilai A',border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:b,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Nilai B',border:OutlineInputBorder())),if(mode=='Volume beton')... [const SizedBox(height:10),TextField(controller:h,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Tinggi / tebal',border:OutlineInputBorder())],const SizedBox(height:14),FilledButton(onPressed:(){final x=double.tryParse(a.text)||0,y=double.tryParse(b.text)||0,z=double.tryParse(h.text)||0;setState(()=>result=mode=='Volume beton'?x*y*z:mode=='Luas segitiga'?x*y/2:x*y);},child:const Text('Hitung')),const SizedBox(height:18),Card(child:ListTile(title:const Text('Hasil'),trailing:Text(result.toStringAsFixed(2))) )]);}
+class ReceiptPage extends StatefulWidget{const ReceiptPage({super.key});@override State<ReceiptPage> createState()=>_ReceiptState();}
+class _ReceiptState extends State<ReceiptPage>{final no=TextEditingController(text:'KW-001'),from=TextEditingController(),amount=TextEditingController(),desc=TextEditingController();@override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(16),children:[Text('Kwitansi',style:Theme.of(c).textTheme.headlineSmall),const SizedBox(height:12),TextField(controller:no,decoration:const InputDecoration(labelText:'Nomor',border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:from,decoration:const InputDecoration(labelText:'Diterima dari',border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:amount,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Jumlah',border:OutlineInputBorder())),const SizedBox(height:10),TextField(controller:desc,maxLines:2,decoration:const InputDecoration(labelText:'Untuk pembayaran',border:OutlineInputBorder())),const SizedBox(height:14),FilledButton(onPressed:()=>showDialog(context:c,builder:(_)=>AlertDialog(title:const Text('Kwitansi'),content:Text('No: ${no.text}\nDiterima dari: ${from.text}\nJumlah: ${money(double.tryParse(amount.text)??0)}\nUntuk: ${desc.text}'),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Tutup'))])),child:const Text('Pratinjau Kwitansi'))]);}
