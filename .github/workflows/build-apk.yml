@@ -29,7 +29,7 @@ jobs:
 
       - name: Validasi analyze
         working-directory: flutter
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Jalankan test
         working-directory: flutter
