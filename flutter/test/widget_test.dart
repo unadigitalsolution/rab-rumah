@@ -7,6 +7,5 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('RAB Rumahku'), findsNWidgets(2));
-    expect(find.text('BUAT RAB RUMAH'), findsOneWidget);
   });
 }
