@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout kode
         uses: actions/checkout@v4
@@ -20,19 +19,9 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Verifikasi Android platform
+      - name: Generate Android platform
         working-directory: flutter
-        run: |
-          test -f android/gradle/wrapper/gradle-wrapper.jar
-          test -f android/settings.gradle
-          test -f android/app/build.gradle
-
-      - name: Set Kotlin Gradle Plugin yang kompatibel
-        working-directory: flutter
-        run: |
-          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*" apply false/id "org.jetbrains.kotlin.android" version "1.9.24" apply false/' android/settings.gradle
-          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*' apply false/id 'org.jetbrains.kotlin.android' version '1.9.24' apply false/" android/settings.gradle
-          sed -i "s/ext.kotlin_version = '[^']*'/ext.kotlin_version = '1.9.24'/" android/build.gradle
+        run: flutter create . --platforms=android --org com.unadigitalsolution --project-name rab_rumahku
 
       - name: Ambil dependencies
         working-directory: flutter
