@@ -1,45 +1,96 @@
 import 'dart:math' as math;
 
 class RabEngine {
-  static double n(dynamic v, [double d = 0]) => double.tryParse('$v') ?? d;
+  static double n(dynamic value, [double fallback = 0]) => double.tryParse('$value') ?? fallback;
   static double maxd(double a, double b) => math.max(a, b).toDouble();
-  static double pct(dynamic v) => maxd(0, n(v));
-  static const materials = <String, List<dynamic>>{
-    'cement':['Semen 50 kg','zak',75000.0],'sand':['Pasir pasang','m3',275000.0],'split':['Batu split','m3',325000.0],'riverstone':['Batu kali','m3',300000.0],
-    'rebar10':['Besi beton 10 mm','kg',16000.0],'rebar12':['Besi beton 12 mm','kg',16500.0],'brick':['Bata merah','pcs',1400.0],'lightbrick':['Bata ringan 60x20x10','pcs',10500.0],
-    'mortar':['Mortar instan','kg',3500.0],'tile':['Keramik 60x60','m2',115000.0],'granite':['Granit 60x60','m2',225000.0],'gypsum':['Papan gypsum 9 mm','m2',95000.0],
-    'grc':['Papan GRC','m2',115000.0],'ceilingframe':['Rangka plafon hollow','m',32000.0],'roof':['Genteng beton','m2',85000.0],'roofmetal':['Spandek','m2',115000.0],
-    'lightsteel':['Rangka baja ringan','m2',175000.0],'insulation':['Insulasi atap','m2',60000.0],'ridge':['Nok atap','m',50000.0],'gutter':['Talang','m',95000.0],
-    'door':['Pintu + kusen standar','unit',1900000.0],'window':['Jendela aluminium + kaca','unit',1450000.0],'primer':['Cat dasar','liter',65000.0],'paintin':['Cat interior','liter',85000.0],'paintout':['Cat eksterior','liter',95000.0],
-    'pvc':['Pipa PVC','m',30000.0],'waterproof':['Waterproofing','kg',40000.0],'toilet':['Kloset','unit',1400000.0],'sink':['Wastafel','unit',950000.0],'shower':['Shower','unit',550000.0],'drain':['Floor drain','unit',100000.0],
-    'cable':['Kabel NYM','m',14500.0],'switch':['Saklar','unit',45000.0],'socket':['Stop kontak','unit',55000.0],'lamp':['Lampu LED','unit',95000.0],
+  static double pct(dynamic value) => maxd(0, n(value));
+  static const Map<String, List<dynamic>> materials = {
+    'cement': ['Semen 50 kg', 'zak', 75000.0], 'sand': ['Pasir pasang', 'm3', 275000.0], 'split': ['Batu split', 'm3', 325000.0], 'riverstone': ['Batu kali', 'm3', 300000.0],
+    'rebar10': ['Besi beton 10 mm', 'kg', 16000.0], 'rebar12': ['Besi beton 12 mm', 'kg', 16500.0], 'brick': ['Bata merah', 'pcs', 1400.0], 'lightbrick': ['Bata ringan 60x20x10', 'pcs', 10500.0],
+    'mortar': ['Mortar instan', 'kg', 3500.0], 'tile': ['Keramik 60x60', 'm2', 115000.0], 'granite': ['Granit 60x60', 'm2', 225000.0], 'gypsum': ['Papan gypsum 9 mm', 'm2', 95000.0],
+    'grc': ['Papan GRC', 'm2', 115000.0], 'ceilingframe': ['Rangka plafon hollow', 'm', 32000.0], 'roof': ['Genteng beton', 'm2', 85000.0], 'roofmetal': ['Spandek', 'm2', 115000.0],
+    'lightsteel': ['Rangka baja ringan', 'm2', 175000.0], 'insulation': ['Insulasi atap', 'm2', 60000.0], 'ridge': ['Nok atap', 'm', 50000.0], 'gutter': ['Talang', 'm', 95000.0],
+    'door': ['Pintu + kusen standar', 'unit', 1900000.0], 'window': ['Jendela aluminium + kaca', 'unit', 1450000.0], 'primer': ['Cat dasar', 'liter', 65000.0], 'paintin': ['Cat interior', 'liter', 85000.0], 'paintout': ['Cat eksterior', 'liter', 95000.0],
+    'pvc': ['Pipa PVC', 'm', 30000.0], 'waterproof': ['Waterproofing', 'kg', 40000.0], 'toilet': ['Kloset', 'unit', 1400000.0], 'sink': ['Wastafel', 'unit', 950000.0], 'shower': ['Shower', 'unit', 550000.0], 'drain': ['Floor drain', 'unit', 100000.0],
+    'cable': ['Kabel NYM', 'm', 14500.0], 'switch': ['Saklar', 'unit', 45000.0], 'socket': ['Stop kontak', 'unit', 55000.0], 'lamp': ['Lampu LED', 'unit', 95000.0],
   };
-  static const labor = <String,double>{
-    'Persiapan|Pembersihan & persiapan lahan':18000.0,'Persiapan|Pengukuran / bouwplank':1800000.0,'Tanah|Galian pondasi':110000.0,'Struktur|Beton sloof, kolom & ring balok':1100000.0,'Struktur|Pembesian':6500.0,
-    'Dinding|Pasangan dinding':85000.0,'Dinding|Plester + aci dua sisi':65000.0,'Lantai|Pasang lantai':65000.0,'Plafon|Pasang plafon':55000.0,'Atap|Rangka & penutup atap':90000.0,
-    'Kusen/Pintu/Jendela|Pemasangan pintu & jendela':175000.0,'Pengecatan|Pengecatan interior & eksterior':42000.0,'Sanitasi|Instalasi air & sanitair':850000.0,'Listrik|Instalasi listrik':95000.0,'Eksterior|Teras':275000.0,'Eksterior|Carport':325000.0,
+  static const Map<String, double> labor = {
+    'Persiapan|Pembersihan & persiapan lahan': 18000.0, 'Persiapan|Pengukuran / bouwplank': 1800000.0, 'Tanah|Galian pondasi': 110000.0,
+    'Struktur|Beton sloof, kolom & ring balok': 1100000.0, 'Struktur|Pembesian': 6500.0, 'Dinding|Pasangan dinding': 85000.0, 'Dinding|Plester + aci dua sisi': 65000.0,
+    'Lantai|Pasang lantai': 65000.0, 'Plafon|Pasang plafon': 55000.0, 'Atap|Rangka & penutup atap': 90000.0,
+    'Kusen/Pintu/Jendela|Pemasangan pintu & jendela': 175000.0, 'Pengecatan|Pengecatan interior & eksterior': 42000.0,
+    'Sanitasi|Instalasi air & sanitair': 850000.0, 'Listrik|Instalasi listrik': 95000.0, 'Eksterior|Teras': 275000.0, 'Eksterior|Carport': 325000.0,
   };
-  static double _price(Map<String,dynamic> p,String id){final x=p['priceOverrides'];return n(x is Map?x[id]:null,n(materials[id]?[2]));}
-  static double _coef(Map<String,dynamic> p,String key,double d){final x=p['coefficients'];return maxd(0,n(x is Map?x[key]:null,d));}
-  static double _waste(Map<String,dynamic> p,String id){final mw=p['materialWaste'];if(mw is Map&&mw[id]!=null)return pct(mw[id]);final w=p['waste'];if(w is! Map)return 0;if(['tile','granite'].contains(id))return pct(w['tile']);if(['paintin','paintout','primer'].contains(id))return pct(w['paint']);if(['roof','roofmetal','lightsteel','insulation'].contains(id))return pct(w['roof']);if(['brick','lightbrick'].contains(id))return pct(w['brick']);return pct(w['material']);}
-  static Map<String,dynamic> calculate(Map<String,dynamic> p){
-    final b=Map<String,dynamic>.from(p['building'] is Map?p['building'] as Map:{}),o=Map<String,dynamic>.from(b['openings'] is Map?b['openings'] as Map:{});
-    final l=maxd(.1,n(b['length'],6)),w=maxd(.1,n(b['width'],6));final floors=math.max(1,n(b['floors'],1).round());final h=maxd(2.4,n(b['wallHeight'],3));final area=l*w,perimeter=2*(l+w);
-    final doors=math.max(1,n(o['doors'],4).round()),windows=math.max(2,n(o['windows'],5).round());final doorArea=doors*n(o['doorWidth'],.9)*n(o['doorHeight'],2.1),windowArea=windows*n(o['windowWidth'],1.2)*n(o['windowHeight'],1.2);final wallNet=maxd(0,perimeter*h*floors-doorArea-windowArea);
-    final pitch=maxd(5,n(b['roofPitch'],30)),overhang=maxd(0,n(b['overhang'],.5));final roofArea=area*(1+2*overhang/math.min(l,w))/math.cos(pitch*math.pi/180);final floorArea=area*floors;final terrace=maxd(0,n(b['terraceArea'])),carport=maxd(0,n(b['carportArea']));
-    final spec=Map<String,dynamic>.from(p['spec'] is Map?p['spec'] as Map:{});final wall='${spec['wall']??'lightbrick'}',floor='${spec['floor']??'tile'}',roof='${spec['roofCover']??'genteng'}',ceiling='${spec['ceiling']??'gypsum'}';final items=<Map<String,dynamic>>[];
-    void m(String id,double qty,String unit,String cat){final def=materials[id]??[id,unit,0.0];final raw=qty*(1+_waste(p,id)/100);final q=['zak','pcs','unit','batang','box','kaleng'].contains(unit)?raw.ceilToDouble():raw;final price=_price(p,id);items.add({'kind':'material','materialId':id,'materialName':def[0],'category':cat,'volume':q,'theoreticalVolume':qty,'unit':unit,'unitPrice':price,'amount':q*price});}
-    void lab(String cat,String desc,double qty,String unit){final key='$cat|$desc',x=p['laborPriceOverrides'];final price=n(x is Map?x[key]:null,labor[key]??0);items.add({'kind':'labor','category':cat,'description':desc,'volume':qty,'unit':unit,'unitPrice':price,'amount':qty*price});}
-    final trench=perimeter*.55*.7;lab('Persiapan','Pembersihan & persiapan lahan',area,'m2');lab('Persiapan','Pengukuran / bouwplank',1,'ls');lab('Tanah','Galian pondasi',trench,'m3');m('riverstone',trench*_coef(p,'foundation.riverstone',.75),'m3','Pondasi');m('sand',trench*_coef(p,'foundation.sand',.12),'m3','Pondasi');m('cement',trench*_coef(p,'foundation.cement',.12),'zak','Pondasi');
-    final concrete=area*floors*_coef(p,'structure.concrete',.055),rebar=area*floors*_coef(p,'structure.rebar',10.5);m('cement',concrete*_coef(p,'structure.cement',7.2),'zak','Struktur');m('sand',concrete*.55,'m3','Struktur');m('split',concrete*.75,'m3','Struktur');m('rebar10',rebar*.55,'kg','Struktur');m('rebar12',rebar*.45,'kg','Struktur');lab('Struktur','Beton sloof, kolom & ring balok',concrete,'m3');lab('Struktur','Pembesian',rebar,'kg');
-    final wallQty=wall=='brick'?65.0:8.5;m(wall=='brick'?'brick':'lightbrick',wallNet*wallQty,'pcs','Dinding');m('mortar',wallNet*(wall=='brick'?.20:.15),'kg','Dinding');lab('Dinding','Pasangan dinding',wallNet,'m2');lab('Dinding','Plester + aci dua sisi',wallNet*2,'m2');
-    m(floor=='granite'?'granite':'tile',floorArea,'m2','Lantai');m('cement',floorArea*.12,'zak','Lantai');lab('Lantai','Pasang lantai',floorArea,'m2');m(ceiling=='grc'?'grc':'gypsum',floorArea,'m2','Plafon');m('ceilingframe',floorArea*3.2,'m','Plafon');lab('Plafon','Pasang plafon',floorArea,'m2');
-    final cover=roof=='metal'?'roofmetal':'roof';m(cover,roofArea,'m2','Atap');m('lightsteel',roofArea,'m2','Atap');if(roof=='genteng')m('insulation',roofArea,'m2','Atap');m('ridge',l*.9,'m','Atap');m('gutter',perimeter*.35,'m','Atap');lab('Atap','Rangka & penutup atap',roofArea,'m2');
-    m('door',doors.toDouble(),'unit','Kusen/Pintu/Jendela');m('window',windows.toDouble(),'unit','Kusen/Pintu/Jendela');lab('Kusen/Pintu/Jendela','Pemasangan pintu & jendela',(doors+windows).toDouble(),'unit');
-    final paintArea=wallNet*2+floorArea;m('primer',paintArea*.12,'liter','Pengecatan');m('paintin',wallNet*.18,'liter','Pengecatan');m('paintout',wallNet*.10,'liter','Pengecatan');lab('Pengecatan','Pengecatan interior & eksterior',paintArea,'m2');
-    final bathrooms=math.max(1,n(b['bathrooms'],1).round());m('pvc',perimeter*bathrooms*.55,'m','Sanitasi');m('waterproof',bathrooms*8.0,'kg','Sanitasi');for(final id in ['toilet','sink','shower','drain'])m(id,bathrooms.toDouble(),'unit','Sanitasi');lab('Sanitasi','Instalasi air & sanitair',bathrooms.toDouble(),'unit');
-    final points=math.max(8,(floorArea/5).ceil());m('cable',points*7.0,'m','Listrik');m('switch',(points*.45).ceilToDouble(),'unit','Listrik');m('socket',(points*.55).ceilToDouble(),'unit','Listrik');m('lamp',(points*.65).ceilToDouble(),'unit','Listrik');lab('Listrik','Instalasi listrik',points.toDouble(),'titik');if(terrace>0)lab('Eksterior','Teras',terrace,'m2');if(carport>0)lab('Eksterior','Carport',carport,'m2');
-    double sum(String k)=>items.where((x)=>x['kind']==k).fold<double>(0,(a,x)=>a+n(x['amount']));final material=sum('material'),laborCost=sum('labor');final ex=Map<String,dynamic>.from(p['extras'] is Map?p['extras'] as Map:{});final equipment=laborCost*pct(ex['equipment']??5)/100,direct=material+laborCost+equipment,overhead=direct*pct(ex['overhead']??5)/100,contingency=direct*pct(ex['contingency']??5)/100,transport=n(ex['transport']),profit=(direct+overhead+contingency+transport)*pct(ex['profit'])/100,total=direct+overhead+contingency+transport+profit;
-    return {'items':items,'geometry':{'length':l,'width':w,'floors':floors,'area':area,'floorArea':floorArea,'wallNet':wallNet,'roofArea':roofArea,'perimeter':perimeter},'summary':{'material':material,'labor':laborCost,'equipment':equipment,'direct':direct,'overhead':overhead,'contingency':contingency,'transport':transport,'profit':profit,'total':total,'area':floorArea,'costPerM2':floorArea>0?total/floorArea:0}};
+  static double _price(Map<String, dynamic> p, String id) {
+    final overrides = p['priceOverrides'];
+    if (overrides is Map && overrides[id] != null) return n(overrides[id]);
+    final def = materials[id];
+    return def == null ? 0 : n(def[2]);
+  }
+  static double _coef(Map<String, dynamic> p, String key, double fallback) {
+    final values = p['coefficients'];
+    if (values is Map && values[key] != null) return maxd(0, n(values[key]));
+    return fallback;
+  }
+  static double _waste(Map<String, dynamic> p, String id) {
+    final materialWaste = p['materialWaste'];
+    if (materialWaste is Map && materialWaste[id] != null) return pct(materialWaste[id]);
+    final waste = p['waste'];
+    if (waste is! Map) return 0;
+    if (id == 'tile' || id == 'granite') return pct(waste['tile']);
+    if (id == 'paintin' || id == 'paintout' || id == 'primer') return pct(waste['paint']);
+    if (id == 'roof' || id == 'roofmetal' || id == 'lightsteel' || id == 'insulation') return pct(waste['roof']);
+    if (id == 'brick' || id == 'lightbrick') return pct(waste['brick']);
+    return pct(waste['material']);
+  }
+  static Map<String, dynamic> calculate(Map<String, dynamic> p) {
+    final b = Map<String, dynamic>.from(p['building'] is Map ? p['building'] as Map : <String, dynamic>{});
+    final o = Map<String, dynamic>.from(b['openings'] is Map ? b['openings'] as Map : <String, dynamic>{});
+    final l = maxd(.1, n(b['length'], 6)), w = maxd(.1, n(b['width'], 6));
+    final floors = math.max(1, n(b['floors'], 1).round());
+    final h = maxd(2.4, n(b['wallHeight'], 3));
+    final area = l * w, perimeter = 2 * (l + w);
+    final doors = math.max(1, n(o['doors'], 4).round()), windows = math.max(2, n(o['windows'], 5).round());
+    final doorArea = doors * n(o['doorWidth'], .9) * n(o['doorHeight'], 2.1);
+    final windowArea = windows * n(o['windowWidth'], 1.2) * n(o['windowHeight'], 1.2);
+    final wallNet = maxd(0, perimeter * h * floors - doorArea - windowArea);
+    final pitch = maxd(5, n(b['roofPitch'], 30)), overhang = maxd(0, n(b['overhang'], .5));
+    final roofArea = area * (1 + 2 * overhang / math.min(l, w)) / math.cos(pitch * math.pi / 180);
+    final floorArea = area * floors, terrace = maxd(0, n(b['terraceArea'])), carport = maxd(0, n(b['carportArea']));
+    final spec = Map<String, dynamic>.from(p['spec'] is Map ? p['spec'] as Map : <String, dynamic>{});
+    final wall = '${spec['wall'] ?? 'lightbrick'}', floor = '${spec['floor'] ?? 'tile'}', roof = '${spec['roofCover'] ?? 'genteng'}', ceiling = '${spec['ceiling'] ?? 'gypsum'}';
+    final items = <Map<String, dynamic>>[];
+    void m(String id, double qty, String unit, String cat) {
+      final def = materials[id] ?? [id, unit, 0.0]; final raw = qty * (1 + _waste(p, id) / 100);
+      final q = const ['zak', 'pcs', 'unit', 'batang', 'box', 'kaleng'].contains(unit) ? raw.ceilToDouble() : raw;
+      final price = _price(p, id);
+      items.add({'kind': 'material', 'materialId': id, 'materialName': def[0], 'category': cat, 'volume': q, 'theoreticalVolume': qty, 'unit': unit, 'unitPrice': price, 'amount': q * price});
+    }
+    void lab(String cat, String desc, double qty, String unit) {
+      final key = '$cat|$desc', x = p['laborPriceOverrides']; final price = x is Map && x[key] != null ? n(x[key]) : (labor[key] ?? 0);
+      items.add({'kind': 'labor', 'category': cat, 'description': desc, 'volume': qty, 'unit': unit, 'unitPrice': price, 'amount': qty * price});
+    }
+    final trench = perimeter * .55 * .7;
+    lab('Persiapan', 'Pembersihan & persiapan lahan', area, 'm2'); lab('Persiapan', 'Pengukuran / bouwplank', 1, 'ls'); lab('Tanah', 'Galian pondasi', trench, 'm3');
+    m('riverstone', trench * _coef(p, 'foundation.riverstone', .75), 'm3', 'Pondasi'); m('sand', trench * _coef(p, 'foundation.sand', .12), 'm3', 'Pondasi'); m('cement', trench * _coef(p, 'foundation.cement', .12), 'zak', 'Pondasi');
+    final concrete = area * floors * _coef(p, 'structure.concrete', .055), rebar = area * floors * _coef(p, 'structure.rebar', 10.5);
+    m('cement', concrete * _coef(p, 'structure.cement', 7.2), 'zak', 'Struktur'); m('sand', concrete * .55, 'm3', 'Struktur'); m('split', concrete * .75, 'm3', 'Struktur'); m('rebar10', rebar * .55, 'kg', 'Struktur'); m('rebar12', rebar * .45, 'kg', 'Struktur');
+    lab('Struktur', 'Beton sloof, kolom & ring balok', concrete, 'm3'); lab('Struktur', 'Pembesian', rebar, 'kg');
+    final wallQty = wall == 'brick' ? 65.0 : 8.5; m(wall == 'brick' ? 'brick' : 'lightbrick', wallNet * wallQty, 'pcs', 'Dinding'); m('mortar', wallNet * (wall == 'brick' ? .20 : .15), 'kg', 'Dinding');
+    lab('Dinding', 'Pasangan dinding', wallNet, 'm2'); lab('Dinding', 'Plester + aci dua sisi', wallNet * 2, 'm2');
+    m(floor == 'granite' ? 'granite' : 'tile', floorArea, 'm2', 'Lantai'); m('cement', floorArea * .12, 'zak', 'Lantai'); lab('Lantai', 'Pasang lantai', floorArea, 'm2');
+    m(ceiling == 'grc' ? 'grc' : 'gypsum', floorArea, 'm2', 'Plafon'); m('ceilingframe', floorArea * 3.2, 'm', 'Plafon'); lab('Plafon', 'Pasang plafon', floorArea, 'm2');
+    final cover = roof == 'metal' ? 'roofmetal' : 'roof'; m(cover, roofArea, 'm2', 'Atap'); m('lightsteel', roofArea, 'm2', 'Atap'); if (roof == 'genteng') m('insulation', roofArea, 'm2', 'Atap'); m('ridge', l * .9, 'm', 'Atap'); m('gutter', perimeter * .35, 'm', 'Atap'); lab('Atap', 'Rangka & penutup atap', roofArea, 'm2');
+    m('door', doors.toDouble(), 'unit', 'Kusen/Pintu/Jendela'); m('window', windows.toDouble(), 'unit', 'Kusen/Pintu/Jendela'); lab('Kusen/Pintu/Jendela', 'Pemasangan pintu & jendela', (doors + windows).toDouble(), 'unit');
+    final paintArea = wallNet * 2 + floorArea; m('primer', paintArea * .12, 'liter', 'Pengecatan'); m('paintin', wallNet * .18, 'liter', 'Pengecatan'); m('paintout', wallNet * .10, 'liter', 'Pengecatan'); lab('Pengecatan', 'Pengecatan interior & eksterior', paintArea, 'm2');
+    final bathrooms = math.max(1, n(b['bathrooms'], 1).round()); m('pvc', perimeter * bathrooms * .55, 'm', 'Sanitasi'); m('waterproof', bathrooms * 8, 'kg', 'Sanitasi');
+    for (final id in ['toilet', 'sink', 'shower', 'drain']) m(id, bathrooms.toDouble(), 'unit', 'Sanitasi'); lab('Sanitasi', 'Instalasi air & sanitair', bathrooms.toDouble(), 'unit');
+    final points = math.max(8, (floorArea / 5).ceil()); m('cable', points * 7, 'm', 'Listrik'); m('switch', (points * .45).ceilToDouble(), 'unit', 'Listrik'); m('socket', (points * .55).ceilToDouble(), 'unit', 'Listrik'); m('lamp', (points * .65).ceilToDouble(), 'unit', 'Listrik'); lab('Listrik', 'Instalasi listrik', points.toDouble(), 'titik');
+    if (terrace > 0) lab('Eksterior', 'Teras', terrace, 'm2'); if (carport > 0) lab('Eksterior', 'Carport', carport, 'm2');
+    double sum(String kind) => items.where((x) => x['kind'] == kind).fold<double>(0, (a, x) => a + n(x['amount']));
+    final material = sum('material'), laborCost = sum('labor'); final ex = Map<String, dynamic>.from(p['extras'] is Map ? p['extras'] as Map : <String, dynamic>{});
+    final equipment = laborCost * pct(ex['equipment'] ?? 5) / 100, direct = material + laborCost + equipment, overhead = direct * pct(ex['overhead'] ?? 5) / 100, contingency = direct * pct(ex['contingency'] ?? 5) / 100, transport = n(ex['transport']);
+    final profit = (direct + overhead + contingency + transport) * pct(ex['profit']) / 100, total = direct + overhead + contingency + transport + profit;
+    return {'items': items, 'geometry': {'length': l, 'width': w, 'floors': floors, 'area': area, 'floorArea': floorArea, 'wallNet': wallNet, 'roofArea': roofArea, 'perimeter': perimeter}, 'summary': {'material': material, 'labor': laborCost, 'equipment': equipment, 'direct': direct, 'overhead': overhead, 'contingency': contingency, 'transport': transport, 'profit': profit, 'total': total, 'area': floorArea, 'costPerM2': floorArea > 0 ? total / floorArea : 0}};
   }
 }
