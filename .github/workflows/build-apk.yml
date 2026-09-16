@@ -20,14 +20,12 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Pastikan Android platform siap
+      - name: Verifikasi Android platform
         working-directory: flutter
         run: |
-          if [ ! -f android/gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Gradle wrapper belum lengkap; generate ulang platform Android..."
-            rm -rf android
-            flutter create --project-name rab_rumahku --platforms=android .
-          fi
+          test -f android/gradle/wrapper/gradle-wrapper.jar
+          test -f android/settings.gradle
+          test -f android/app/build.gradle
 
       - name: Set Kotlin Gradle Plugin yang kompatibel
         working-directory: flutter
@@ -40,9 +38,13 @@ jobs:
         working-directory: flutter
         run: flutter pub get
 
-      - name: Validasi project
+      - name: Validasi analyze
         working-directory: flutter
         run: flutter analyze
+
+      - name: Jalankan test
+        working-directory: flutter
+        run: flutter test
 
       - name: Build APK Release
         working-directory: flutter
