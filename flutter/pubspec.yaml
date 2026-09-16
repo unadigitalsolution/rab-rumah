@@ -1,7 +1,7 @@
 name: rab_rumahku
-description: RAB Rumahku offline-first mobile client
+description: RAB Rumahku Pro - perencanaan rumah, quantity takeoff, material, RAB dan maket 3D
 publish_to: 'none'
-version: 1.0.0+1
+version: 3.0.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
