@@ -59,14 +59,14 @@ class LicenseService {
   }
 }
 
-class LicensePage extends StatefulWidget {
-  const LicensePage({super.key});
+class AppLicensePage extends StatefulWidget {
+  const AppLicensePage({super.key});
 
   @override
-  State<LicensePage> createState() => _LicensePageState();
+  State<AppLicensePage> createState() => _AppLicensePageState();
 }
 
-class _LicensePageState extends State<LicensePage> {
+class _AppLicensePageState extends State<AppLicensePage> {
   final controller = TextEditingController();
   bool activated = false;
   int trialLeft = 0;
@@ -90,17 +90,21 @@ class _LicensePageState extends State<LicensePage> {
     });
   }
 
-  Future<void> activate() async {
+  Future<void> activateLicense() async {
     final ok = await LicenseService.activate(controller.text);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'Lisensi berhasil diaktifkan.' : 'Kode lisensi tidak valid.')),
+      SnackBar(
+        content: Text(
+          ok ? 'Lisensi berhasil diaktifkan.' : 'Kode lisensi tidak valid.',
+        ),
+      ),
     );
     if (ok) controller.clear();
     await refresh();
   }
 
-  Future<void> deactivate() async {
+  Future<void> deactivateLicense() async {
     await LicenseService.deactivate();
     await refresh();
   }
@@ -116,13 +120,22 @@ class _LicensePageState extends State<LicensePage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Lisensi Aplikasi', style: Theme.of(context).textTheme.headlineSmall),
+        Text(
+          'Lisensi Aplikasi',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         const SizedBox(height: 8),
         Card(
           child: ListTile(
-            leading: Icon(activated ? Icons.verified : Icons.hourglass_bottom),
+            leading: Icon(
+              activated ? Icons.verified : Icons.hourglass_bottom,
+            ),
             title: Text(activated ? 'AKTIF' : 'MODE TRIAL'),
-            subtitle: Text(activated ? 'Lisensi: $currentKey' : 'Sisa trial: $trialLeft hari'),
+            subtitle: Text(
+              activated
+                  ? 'Lisensi: $currentKey'
+                  : 'Sisa trial: $trialLeft hari',
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -137,27 +150,33 @@ class _LicensePageState extends State<LicensePage> {
         ),
         const SizedBox(height: 10),
         FilledButton.icon(
-          onPressed: activate,
+          onPressed: activateLicense,
           icon: const Icon(Icons.key),
           label: const Text('Aktifkan Lisensi'),
         ),
         if (activated) ...[
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: deactivate,
+            onPressed: deactivateLicense,
             icon: const Icon(Icons.logout),
             label: const Text('Nonaktifkan di perangkat ini'),
           ),
         ],
         const SizedBox(height: 18),
-        const Text('Lisensi disimpan lokal pada perangkat. Untuk distribusi komersial, validasi penerbitan kode sebaiknya dilakukan oleh server lisensi agar kode tidak dapat dibuat sendiri oleh pengguna.'),
+        const Text(
+          'Lisensi disimpan lokal pada perangkat. Untuk distribusi komersial, validasi penerbitan kode sebaiknya dilakukan oleh server lisensi agar kode tidak dapat dibuat sendiri oleh pengguna.',
+        ),
       ],
     );
   }
 }
 
 class LicenseGate extends StatefulWidget {
-  const LicenseGate({super.key, required this.child, required this.onOpenLicense});
+  const LicenseGate({
+    super.key,
+    required this.child,
+    required this.onOpenLicense,
+  });
   final Widget child;
   final VoidCallback onOpenLicense;
 
@@ -199,11 +218,20 @@ class _LicenseGateState extends State<LicenseGate> {
           children: [
             const Icon(Icons.lock_outline, size: 56),
             const SizedBox(height: 12),
-            const Text('Masa trial telah berakhir.', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text(
+              'Masa trial telah berakhir.',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            const Text('Aktifkan lisensi untuk melanjutkan penggunaan aplikasi.'),
+            const Text(
+              'Aktifkan lisensi untuk melanjutkan penggunaan aplikasi.',
+            ),
             const SizedBox(height: 16),
-            FilledButton.icon(onPressed: widget.onOpenLicense, icon: const Icon(Icons.key), label: const Text('Buka Lisensi')),
+            FilledButton.icon(
+              onPressed: widget.onOpenLicense,
+              icon: const Icon(Icons.key),
+              label: const Text('Buka Lisensi'),
+            ),
           ],
         ),
       ),
