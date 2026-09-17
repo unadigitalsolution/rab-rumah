@@ -29,6 +29,10 @@ jobs:
           sed -i 's/1.7.10/1.9.24/g' android/settings.gradle android/build.gradle 2>/dev/null || true
           grep -R "kotlin" android/settings.gradle android/build.gradle || true
 
+      - name: Siapkan upgrade Maket
+        working-directory: flutter
+        run: python3 tool/prepare_maket_upgrade.py
+
       - name: Terapkan upgrade Maket 2D + 3D
         working-directory: flutter
         run: python3 tool/upgrade_maket.py
