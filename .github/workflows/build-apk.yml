@@ -31,7 +31,7 @@ jobs:
 
       - name: Siapkan upgrade Maket
         working-directory: flutter
-        run: python3 tool/prepare_maket_upgrade.py
+        run: python3 tool/prepare_maket_upgrade_v2.py
 
       - name: Terapkan upgrade Maket 2D + 3D
         working-directory: flutter
