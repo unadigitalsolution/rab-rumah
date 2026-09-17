@@ -48,7 +48,7 @@ class _FullMaketState extends State<FullMaketView> {
         IconButton(icon:const Icon(Icons.arrow_forward),onPressed:()=>setState(()=>r.x=math.min(6-r.w,r.x+.25))),
         IconButton(icon:const Icon(Icons.arrow_upward),onPressed:()=>setState(()=>r.y=math.max(0,r.y-.25))),
         IconButton(icon:const Icon(Icons.arrow_downward),onPressed:()=>setState(()=>r.y=math.min(6-r.h,r.y+.25))),
-      ]))),
+      ]))),),
     ]);
   }
   Widget _typeCard(String t) => GestureDetector(onTap:()=>setState(()=>type=t), child:AnimatedContainer(duration:const Duration(milliseconds:180),width:150,padding:const EdgeInsets.all(8),decoration:BoxDecoration(borderRadius:BorderRadius.circular(12),border:Border.all(width:type==t?2:1,color:type==t?Theme.of(context).colorScheme.primary:Colors.grey)),child:Column(children:[Expanded(child:CustomPaint(painter:_ThumbPainter(type:t,roof:roofVisible))),Text(t,style:const TextStyle(fontWeight:FontWeight.w600))])));
