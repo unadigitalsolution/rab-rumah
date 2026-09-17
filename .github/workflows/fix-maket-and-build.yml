@@ -19,22 +19,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Patch Flutter navigation and maket
+      - name: Patch Flutter navigation, maket and license
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('flutter/lib/main.dart')
           s=p.read_text()
           if "import 'maket_3d.dart';" not in s:
-              s=s.replace("import 'rab_engine.dart';", "import 'rab_engine.dart';\nimport 'maket_3d.dart';")
-          s=s.replace("      MorePage(onNav: nav),\n", "      MorePage(onNav: nav),\n      const FullMaketView(),\n")
+              s=s.replace("import 'rab_engine.dart';", "import 'rab_engine.dart';\nimport 'maket_3d.dart';\nimport 'license.dart';")
+          elif "import 'license.dart';" not in s:
+              s=s.replace("import 'maket_3d.dart';", "import 'maket_3d.dart';\nimport 'license.dart';")
+          if "const FullMaketView()," not in s:
+              s=s.replace("      MorePage(onNav: nav),\n", "      MorePage(onNav: nav),\n      const FullMaketView(),\n")
+          if "const LicensePage()," not in s:
+              s=s.replace("      const ReceiptPage(),\n", "      const ReceiptPage(),\n      const LicensePage(),\n")
           s=s.replace("_item(context, 4, 'Galeri / Maket', Icons.view_in_ar)", "_item(context, 9, 'Galeri / Maket', Icons.view_in_ar)")
           s=s.replace("('Galeri / Maket', Icons.view_in_ar, 4)", "('Galeri / Maket', Icons.view_in_ar, 9)")
+          if "_item(context, 10, 'Lisensi'" not in s:
+              s=s.replace("          _item(context, 8, 'Kwitansi', Icons.receipt_long),", "          _item(context, 8, 'Kwitansi', Icons.receipt_long),\n          _item(context, 10, 'Lisensi', Icons.key),")
+          s=s.replace("('Kwitansi', Icons.receipt_long, 8),", "('Kwitansi', Icons.receipt_long, 8),\n      ('Lisensi', Icons.key, 10),")
+          # Replace the known malformed compact room editor expression with a safe equivalent.
+          s=re.sub(r"^      \.\.\.rooms\.asMap\(\)\.entries\.map\(.*$", "      ...rooms.map((room) => ListTile(title: Text(room.name), subtitle: Text('X ${room.x.toStringAsFixed(1)} m • Y ${room.y.toStringAsFixed(1)} m'))),", s, flags=re.M)
+          # Route the old maket widget to the new interactive screen when present.
           s=s.replace("MaketView(\n            result: result,\n            topView: topView,\n            onTop: () => setState(() => topView = !topView),\n          )", "FullMaketView(result: result)")
-          # Repair an accidental line-break inside the profile subtitle string if present.
-          s=s.replace("'${profile['address'] ?? ''}\\\n${profile['contact'] ?? ''}'", "'${profile['address'] ?? ''}\\n${profile['contact'] ?? ''}'")
+          # Gate the application while leaving settings and license screens reachable.
+          old="""        body: pages[page],"""
+          new="""        body: (page == 6 || page == 10)\n            ? pages[page]\n            : LicenseGate(onOpenLicense: () => nav(10), child: pages[page]),"""
+          s=s.replace(old,new)
           p.write_text(s)
           PY
+
+      - name: Format and verify source
+        working-directory: flutter
+        run: |
+          dart format lib/main.dart lib/maket_3d.dart lib/license.dart
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -63,13 +82,13 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add flutter/lib/main.dart flutter/lib/maket_3d.dart
-          git diff --cached --quiet || git commit -m 'fix(flutter): activate house types and interactive 3D maket [maket-fixed]'
+          git add flutter/lib/main.dart flutter/lib/maket_3d.dart flutter/lib/license.dart
+          git diff --cached --quiet || git commit -m 'fix(flutter): final maket 3D and license gate [maket-fixed]'
           git push
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: rab-rumahku-apk-3d-final
+          name: rab-rumahku-apk-final
           path: flutter/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
