@@ -31,8 +31,8 @@ jobs:
               s=s.replace("import 'maket_3d.dart';", "import 'maket_3d.dart';\nimport 'license.dart';")
           if "const FullMaketView()," not in s:
               s=s.replace("      MorePage(onNav: nav),\n", "      MorePage(onNav: nav),\n      const FullMaketView(),\n")
-          if "const LicensePage()," not in s:
-              s=s.replace("      const ReceiptPage(),\n", "      const ReceiptPage(),\n      const LicensePage(),\n")
+          if "const AppLicensePage()," not in s:
+              s=s.replace("      const ReceiptPage(),\n", "      const ReceiptPage(),\n      const AppLicensePage(),\n")
           s=s.replace("_item(context, 4, 'Galeri / Maket', Icons.view_in_ar)", "_item(context, 5, 'Galeri / Maket', Icons.view_in_ar)")
           s=s.replace("_item(context, 5, 'Laporan', Icons.assessment)", "_item(context, 6, 'Laporan', Icons.assessment)")
           s=s.replace("_item(context, 6, 'Pengaturan & Lisensi', Icons.settings)", "_item(context, 7, 'Pengaturan', Icons.settings)")
