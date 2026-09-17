@@ -23,7 +23,6 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('flutter/lib/main.dart')
           s=p.read_text()
           if "import 'maket_3d.dart';" not in s:
@@ -34,16 +33,22 @@ jobs:
               s=s.replace("      MorePage(onNav: nav),\n", "      MorePage(onNav: nav),\n      const FullMaketView(),\n")
           if "const LicensePage()," not in s:
               s=s.replace("      const ReceiptPage(),\n", "      const ReceiptPage(),\n      const LicensePage(),\n")
-          s=s.replace("_item(context, 4, 'Galeri / Maket', Icons.view_in_ar)", "_item(context, 9, 'Galeri / Maket', Icons.view_in_ar)")
-          s=s.replace("('Galeri / Maket', Icons.view_in_ar, 4)", "('Galeri / Maket', Icons.view_in_ar, 9)")
+          s=s.replace("_item(context, 4, 'Galeri / Maket', Icons.view_in_ar)", "_item(context, 5, 'Galeri / Maket', Icons.view_in_ar)")
+          s=s.replace("_item(context, 5, 'Laporan', Icons.assessment)", "_item(context, 6, 'Laporan', Icons.assessment)")
+          s=s.replace("_item(context, 6, 'Pengaturan & Lisensi', Icons.settings)", "_item(context, 7, 'Pengaturan', Icons.settings)")
+          s=s.replace("_item(context, 7, 'Kalkulator', Icons.calculate)", "_item(context, 8, 'Kalkulator', Icons.calculate)")
+          s=s.replace("_item(context, 8, 'Kwitansi', Icons.receipt_long)", "_item(context, 9, 'Kwitansi', Icons.receipt_long)")
           if "_item(context, 10, 'Lisensi'" not in s:
-              s=s.replace("          _item(context, 8, 'Kwitansi', Icons.receipt_long),", "          _item(context, 8, 'Kwitansi', Icons.receipt_long),\n          _item(context, 10, 'Lisensi', Icons.key),")
-          s=s.replace("('Kwitansi', Icons.receipt_long, 8),", "('Kwitansi', Icons.receipt_long, 8),\n      ('Lisensi', Icons.key, 10),")
-          s=re.sub(r"^      \.\.\.rooms\.asMap\(\)\.entries\.map\(.*$", "      ...rooms.map((room) => ListTile(title: Text(room.name), subtitle: Text('X ${room.x.toStringAsFixed(1)} m • Y ${room.y.toStringAsFixed(1)} m'))),", s, flags=re.M)
+              s=s.replace("          _item(context, 9, 'Kwitansi', Icons.receipt_long),", "          _item(context, 9, 'Kwitansi', Icons.receipt_long),\n          _item(context, 10, 'Lisensi', Icons.key),")
+          s=s.replace("('Galeri / Maket', Icons.view_in_ar, 4)", "('Galeri / Maket', Icons.view_in_ar, 5)")
+          s=s.replace("('Laporan', Icons.assessment, 5)", "('Laporan', Icons.assessment, 6)")
+          s=s.replace("('Pengaturan & Lisensi', Icons.settings, 6)", "('Pengaturan', Icons.settings, 7)")
+          s=s.replace("('Kalkulator', Icons.calculate, 7)", "('Kalkulator', Icons.calculate, 8)")
+          s=s.replace("('Kwitansi', Icons.receipt_long, 8)", "('Kwitansi', Icons.receipt_long, 9)")
+          if "('Lisensi', Icons.key, 10)" not in s:
+              s=s.replace("('Kwitansi', Icons.receipt_long, 9),", "('Kwitansi', Icons.receipt_long, 9),\n      ('Lisensi', Icons.key, 10),")
           s=s.replace("MaketView(\n            result: result,\n            topView: topView,\n            onTop: () => setState(() => topView = !topView),\n          )", "FullMaketView(result: result)")
-          old="""        body: pages[page],"""
-          new="""        body: (page == 6 || page == 10)\n            ? pages[page]\n            : LicenseGate(onOpenLicense: () => nav(10), child: pages[page]),"""
-          s=s.replace(old,new)
+          s=s.replace("        body: pages[page],", "        body: (page == 7 || page == 10)\n            ? pages[page]\n            : LicenseGate(onOpenLicense: () => nav(10), child: pages[page]),")
           p.write_text(s)
           PY
 
