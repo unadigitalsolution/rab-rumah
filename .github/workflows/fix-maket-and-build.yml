@@ -39,21 +39,13 @@ jobs:
           if "_item(context, 10, 'Lisensi'" not in s:
               s=s.replace("          _item(context, 8, 'Kwitansi', Icons.receipt_long),", "          _item(context, 8, 'Kwitansi', Icons.receipt_long),\n          _item(context, 10, 'Lisensi', Icons.key),")
           s=s.replace("('Kwitansi', Icons.receipt_long, 8),", "('Kwitansi', Icons.receipt_long, 8),\n      ('Lisensi', Icons.key, 10),")
-          # Replace the known malformed compact room editor expression with a safe equivalent.
           s=re.sub(r"^      \.\.\.rooms\.asMap\(\)\.entries\.map\(.*$", "      ...rooms.map((room) => ListTile(title: Text(room.name), subtitle: Text('X ${room.x.toStringAsFixed(1)} m • Y ${room.y.toStringAsFixed(1)} m'))),", s, flags=re.M)
-          # Route the old maket widget to the new interactive screen when present.
           s=s.replace("MaketView(\n            result: result,\n            topView: topView,\n            onTop: () => setState(() => topView = !topView),\n          )", "FullMaketView(result: result)")
-          # Gate the application while leaving settings and license screens reachable.
           old="""        body: pages[page],"""
           new="""        body: (page == 6 || page == 10)\n            ? pages[page]\n            : LicenseGate(onOpenLicense: () => nav(10), child: pages[page]),"""
           s=s.replace(old,new)
           p.write_text(s)
           PY
-
-      - name: Format and verify source
-        working-directory: flutter
-        run: |
-          dart format lib/main.dart lib/maket_3d.dart lib/license.dart
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -61,6 +53,11 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+
+      - name: Format and verify source
+        working-directory: flutter
+        run: |
+          dart format lib/main.dart lib/maket_3d.dart lib/license.dart
 
       - name: Dependencies
         working-directory: flutter
