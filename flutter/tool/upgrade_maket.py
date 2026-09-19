@@ -64,11 +64,6 @@ class _MaketViewState extends State<MaketView> {
             children: [
               const Expanded(child: Text('Maket 3D • seret untuk memutar, cubit untuk zoom')),
               Switch(value: roofVisible, onChanged: (v) => setState(() => roofVisible = v)),
-              IconButton(
-                tooltip: 'Reset tampilan',
-                onPressed: _resetView,
-                icon: const Icon(Icons.restart_alt),
-              ),
             ],
           ),
         const SizedBox(height: 6),
@@ -88,9 +83,9 @@ class _MaketViewState extends State<MaketView> {
                   )
                 : GestureDetector(
                     onScaleUpdate: (details) => setState(() {
-                      azimuth += details.focalPointDelta.dx * .012;
-                      elevation = (elevation - details.focalPointDelta.dy * .006).clamp(.18, 1.35);
-                      zoom = (zoom * details.scale).clamp(.6, 2.6);
+                      azimuth += details.focalPointDelta.dx * .009;
+                      elevation = (elevation - details.focalPointDelta.dy * .0045).clamp(.42, .95);
+                      zoom = (zoom * details.scale).clamp(.85, 1.6);
                     }),
                     child: ClipRect(
                       child: Transform.scale(
@@ -107,8 +102,18 @@ class _MaketViewState extends State<MaketView> {
         const SizedBox(height: 8),
         if (mode == 0)
           const Text('Pinch untuk zoom • geser untuk melihat seluruh denah • ukuran mengikuti dimensi proyek.')
-        else
+        else ...[
           const Text('Seret jari untuk memutar rumah • cubit dua jari untuk zoom • matikan genteng untuk lihat interior.'),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _resetView,
+              icon: const Icon(Icons.restart_alt),
+              label: const Text('Reset tampilan ke posisi normal'),
+            ),
+          ),
+        ],
       ],
     );
   }
