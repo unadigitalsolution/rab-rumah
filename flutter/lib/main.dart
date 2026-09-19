@@ -68,10 +68,14 @@ class _AppState extends State<RabRumahApp> {
   }
 
   Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile', jsonEncode(profile));
-    await prefs.setString('projects', jsonEncode(projects));
-    await prefs.setString('materials', jsonEncode(materials));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile', jsonEncode(profile));
+      await prefs.setString('projects', jsonEncode(projects));
+      await prefs.setString('materials', jsonEncode(materials));
+    } catch (e) {
+      debugPrint('Gagal menyimpan data ke penyimpanan lokal: $e');
+    }
   }
 
   void nav(int index) => setState(() => page = index);
@@ -401,19 +405,32 @@ class _EditorState extends State<EditorPage> {
   }
 
   void saveProject() {
-    final result = RabEngine.calculate(input());
-    widget.onSave({
-      'name': name.text.trim().isEmpty ? 'Rumah Baru' : name.text.trim(),
-      'owner': owner.text,
-      'location': location.text,
-      'length': length,
-      'width': width,
-      'floors': floors,
-      'area': result['geometry']['floorArea'],
-      'total': result['summary']['total'],
-      'rab': result,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
+    try {
+      final result = RabEngine.calculate(input());
+      widget.onSave({
+        'name': name.text.trim().isEmpty ? 'Rumah Baru' : name.text.trim(),
+        'owner': owner.text,
+        'location': location.text,
+        'length': length,
+        'width': width,
+        'floors': floors,
+        'area': result['geometry']['floorArea'],
+        'total': result['summary']['total'],
+        'rab': result,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Proyek berhasil disimpan')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan proyek: $e')),
+        );
+      }
+    }
   }
 
   Widget numBox(String label, double value, ValueChanged<double> setter) {
@@ -549,7 +566,11 @@ class _EditorState extends State<EditorPage> {
           ),
         ] else if (tab == 3) ...[
           SummaryTable(summary: summary),
-          Text('Komponen RAB: ${(result['items'] as List).length} item'),
+          const SizedBox(height: 16),
+          Text('Rincian Barang & Upah (${(result['items'] as List).length} item)',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          RabItemsTable(items: (result['items'] as List).cast<JsonMap>()),
         ] else ...[
           MaketView(
             result: result,
@@ -605,6 +626,72 @@ class SummaryTable extends StatelessWidget {
     );
   }
 }
+
+class RabItemsTable extends StatelessWidget {
+  const RabItemsTable({super.key, required this.items});
+
+  final List<JsonMap> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = <String, List<JsonMap>>{};
+    for (final item in items) {
+      final cat = '${item['category'] ?? '-'}';
+      categories.putIfAbsent(cat, () => []).add(item);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: categories.entries.map((entry) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(entry.key, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                const Divider(height: 12),
+                ...entry.value.map((item) {
+                  final isMaterial = item['kind'] == 'material';
+                  final name = isMaterial ? '${item['materialName']}' : '${item['description']}';
+                  final volume = (item['volume'] as num?) ?? 0;
+                  final unit = '${item['unit'] ?? ''}';
+                  final amount = (item['amount'] as num?) ?? 0;
+                  final qtyText = volume == volume.roundToDouble()
+                      ? volume.toStringAsFixed(0)
+                      : volume.toStringAsFixed(2);
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(name, style: const TextStyle(fontSize: 13)),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text('$qtyText $unit',
+                              textAlign: TextAlign.right, style: const TextStyle(fontSize: 13)),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(money(amount),
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
 
 class MaketView extends StatelessWidget {
   const MaketView({
