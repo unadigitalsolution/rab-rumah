@@ -272,10 +272,15 @@ class House3DPainter extends CustomPainter {
     final wallShade = Paint()..color = const Color(0xFFCBD5E1);
     final roofP = Paint()..color = const Color(0xFF7C6355);
     final roofShade = Paint()..color = const Color(0xFF5F4B40);
-    final terraceP = Paint()..color = const Color(0xFFE7E1D6);
-    final terraceEdge = Paint()..color = const Color(0xFFB8AE9C);
+    final terraceP = Paint()..color = const Color(0xFFD9A066);
+    final terraceEdge = Paint()..color = const Color(0xFFB07A3E);
+    final railPaint = Paint()
+      ..color = const Color(0xFF334155)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
     final glass = Paint()..color = const Color(0xFF7FB4D8);
     final doorP = Paint()..color = const Color(0xFF6B4A32);
+    final partitionP = Paint()..color = const Color(0xFFE7E9EC);
     final outline = Paint()
       ..color = const Color(0xFF334155)
       ..style = PaintingStyle.stroke
@@ -294,20 +299,29 @@ class House3DPainter extends CustomPainter {
     final gpad = math.max(l, w) * .6;
     poly([iso(-gpad, -gpad, 0), iso(l + gpad, -gpad, 0), iso(l + gpad, w + gpad, 0), iso(-gpad, w + gpad, 0)], ground, stroke: false);
 
-    // Terrace / porch slab hugging the south (y = 0) facade, with one step down.
-    final td = math.max(.9, l * .16);
-    final tw = l * .45;
-    final stepH = wallH * .12;
-    final terr0 = iso(cx - tw / 2, -td, stepH);
-    final terr1 = iso(cx + tw / 2, -td, stepH);
-    final terr2 = iso(cx + tw / 2, 0, stepH);
-    final terr3 = iso(cx - tw / 2, 0, stepH);
-    poly([terr0, terr1, terr2, terr3], terraceP);
-    poly([terr0, terr1, iso(cx + tw / 2, -td, 0), iso(cx - tw / 2, -td, 0)], terraceEdge);
-    poly([terr1, terr2, iso(cx + tw / 2, 0, 0), iso(cx + tw / 2, -td, 0)], terraceEdge);
+    // Room zones (same layout as the 2D denah) tinted onto the floor so the
+    // cutaway view reads as real rooms, not an empty box.
+    final rx1 = l * .50, ry1 = w * .34, ry2 = w * .68;
+    final zoneColors = <List<double>, Color>{
+      [0, 0, rx1, ry1]: const Color(0xFFFDE8D2), // DAPUR
+      [rx1, 0, l, ry1]: const Color(0xFFD7ECF5), // KM/WC
+      [0, ry1, rx1, ry2]: const Color(0xFFE3E0F5), // KAMAR 02
+      [rx1, ry1, l, w]: const Color(0xFFE1F0E3), // RUANG KELUARGA (+ KAMAR 01)
+      [0, ry2, rx1, w]: const Color(0xFFF5E9DA), // RUANG TAMU
+    };
+    if (!roofVisible) {
+      zoneColors.forEach((box, color) {
+        poly(
+          [iso(box[0], box[1], .01), iso(box[2], box[1], .01), iso(box[2], box[3], .01), iso(box[0], box[3], .01)],
+          Paint()..color = color,
+          stroke: false,
+        );
+      });
+    } else {
+      poly([p00, p10, p11, p01], floorP, stroke: false);
+    }
 
-    // Floor slab, then the four walls (back walls drawn before front for depth ordering).
-    poly([p00, p10, p11, p01], floorP, stroke: false);
+    // Exterior walls (back/side drawn before front for basic depth ordering).
     poly([p10, p11, t11, t10], wallShade);
     poly([p01, p11, t11, t01], wallShade);
     poly([p00, p10, t10, t00], wall); // south / front facade (has door + windows)
@@ -321,6 +335,40 @@ class House3DPainter extends CustomPainter {
     poly([onFront(.42, .05), onFront(.56, .05), onFront(.56, .82), onFront(.42, .82)], doorP);
     poly([onFront(.14, .28), onFront(.28, .28), onFront(.28, .62), onFront(.14, .62)], glass);
     poly([onFront(.70, .28), onFront(.84, .28), onFront(.84, .62), onFront(.70, .62)], glass);
+
+    // Interior partition walls, visible once the roof is hidden.
+    if (!roofVisible) {
+      final partH = wallH * .55;
+      void wallSeg(double x0, double y0, double x1, double y1) {
+        poly([iso(x0, y0, 0), iso(x1, y1, 0), iso(x1, y1, partH), iso(x0, y0, partH)], partitionP);
+      }
+      wallSeg(rx1, 0, rx1, ry2);
+      wallSeg(0, ry1, l, ry1);
+      wallSeg(0, ry2, rx1, ry2);
+      wallSeg(rx1, ry2, rx1, w);
+      _label(canvas, 'DAPUR', iso(rx1 * .5, ry1 * .5, partH + 6), 10);
+      _label(canvas, 'KM/WC', iso((rx1 + l) * .5, ry1 * .5, partH + 6), 9);
+      _label(canvas, 'KAMAR 02', iso(rx1 * .5, (ry1 + ry2) * .5, partH + 6), 10);
+      _label(canvas, 'R. KELUARGA', iso((rx1 + l) * .5, (ry1 + w) * .55, partH + 6), 10);
+      _label(canvas, 'RUANG TAMU', iso(rx1 * .5, (ry2 + w) * .5, partH + 6), 10);
+    }
+
+    // Terrace / porch slab hugging the south (y = 0) facade, drawn last so it
+    // always reads clearly in front of the house, with a step and railing.
+    final td = math.max(.9, l * .16);
+    final tw = l * .45;
+    final stepH = wallH * .12;
+    final terr0 = iso(cx - tw / 2, -td, stepH);
+    final terr1 = iso(cx + tw / 2, -td, stepH);
+    final terr2 = iso(cx + tw / 2, 0, stepH);
+    final terr3 = iso(cx - tw / 2, 0, stepH);
+    poly([terr0, terr1, terr2, terr3], terraceP);
+    poly([terr0, terr1, iso(cx + tw / 2, -td, 0), iso(cx - tw / 2, -td, 0)], terraceEdge);
+    poly([terr1, terr2, iso(cx + tw / 2, 0, 0), iso(cx + tw / 2, -td, 0)], terraceEdge);
+    for (final fx in [cx - tw / 2, cx - tw / 6, cx + tw / 6, cx + tw / 2]) {
+      canvas.drawLine(iso(fx, -td, stepH), iso(fx, -td, stepH + wallH * .38), railPaint);
+    }
+    canvas.drawLine(iso(cx - tw / 2, -td, stepH + wallH * .38), iso(cx + tw / 2, -td, stepH + wallH * .38), railPaint);
 
     if (roofVisible) {
       final ridgeZ = wallH + math.max(40, math.min(80, math.min(l, w) * scale * .4));
