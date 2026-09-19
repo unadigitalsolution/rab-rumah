@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'rab_engine.dart';
+import 'maket_3d.dart';
 
 typedef JsonMap = Map<String, dynamic>;
 
@@ -111,6 +112,11 @@ class _AppState extends State<RabRumahApp> {
       ),
       const CalculatorPage(),
       const ReceiptPage(),
+      FullMaketView(
+        result: projects.isNotEmpty
+            ? projects.first['rab'] as JsonMap?
+            : null,
+      ),
     ];
 
     return MaterialApp(
@@ -191,7 +197,7 @@ class AppDrawer extends StatelessWidget {
           _item(context, 1, 'Buat RAB', Icons.add_box),
           _item(context, 2, 'Proyek Saya', Icons.folder),
           _item(context, 3, 'Material', Icons.inventory_2),
-          _item(context, 4, 'Galeri / Maket', Icons.view_in_ar),
+          _item(context, 9, 'Galeri / Maket', Icons.view_in_ar),
           _item(context, 5, 'Laporan', Icons.assessment),
           _item(context, 6, 'Pengaturan & Lisensi', Icons.settings),
           _item(context, 7, 'Kalkulator', Icons.calculate),
@@ -832,7 +838,7 @@ class MorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      ('Galeri / Maket', Icons.view_in_ar, 4),
+      ('Galeri / Maket', Icons.view_in_ar, 9),
       ('Laporan', Icons.assessment, 5),
       ('Pengaturan & Lisensi', Icons.settings, 6),
       ('Kalkulator', Icons.calculate, 7),
