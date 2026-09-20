@@ -259,7 +259,8 @@ class House3DPainter extends CustomPainter {
     final oy = size.height * .46;
     final sx = scale;
     final sy = scale * (.22 + elevation * .34);
-    final wallH = math.min(115.0, size.height * .26);
+    final floors = ((g['floors'] as num?) ?? 1).toDouble().clamp(1, 4);
+    final wallH = 2.9 * floors; // real wall height in metres, not pixels
     final ov = math.min(l, w) * .10; // eave overhang, in building units
 
     final cosA = math.cos(azimuth), sinA = math.sin(azimuth);
@@ -376,7 +377,7 @@ class House3DPainter extends CustomPainter {
     canvas.drawLine(iso(cx - tw / 2, -td, stepH + wallH * .38), iso(cx + tw / 2, -td, stepH + wallH * .38), railPaint);
 
     if (roofVisible) {
-      final ridgeZ = wallH + math.max(40, math.min(80, math.min(l, w) * scale * .4));
+      final ridgeZ = wallH + math.max(1.0, math.min(2.6, math.min(l, w) * .38));
       final e00 = iso(-ov, -ov, wallH), e10 = iso(l + ov, -ov, wallH);
       final e11 = iso(l + ov, w + ov, wallH), e01 = iso(-ov, w + ov, wallH);
       final r0 = iso(l / 2, -ov, ridgeZ), r1 = iso(l / 2, w + ov, ridgeZ);
