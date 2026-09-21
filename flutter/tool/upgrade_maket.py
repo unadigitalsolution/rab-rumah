@@ -5,11 +5,11 @@ p = Path('lib/main.dart')
 s = p.read_text(encoding='utf-8')
 pattern = r'class MaketView extends StatelessWidget \{.*?\n double _max\(double a, double b\) => a > b \? a : b;'
 replacement = r'''class MaketView extends StatefulWidget {
-  const MaketView({super.key, required this.result, required this.topView, required this.onTop});
+  const MaketView({super.key, required this.result, this.initialLayout, this.onLayoutChanged});
 
   final JsonMap result;
-  final bool topView;
-  final VoidCallback onTop;
+  final Map<String, dynamic>? initialLayout;
+  final void Function(double dx1, double dy1, double dy2)? onLayoutChanged;
 
   @override
   State<MaketView> createState() => _MaketViewState();
@@ -22,9 +22,9 @@ class _MaketViewState extends State<MaketView> {
   double azimuth = -0.62;
   double elevation = .62;
   double zoom = 1.0;
-  double dx1 = .50; // room divider fractions, user-editable in 2D mode
-  double dy1 = .34;
-  double dy2 = .68;
+  late double dx1 = (widget.initialLayout?['dx1'] as num?)?.toDouble() ?? .50;
+  late double dy1 = (widget.initialLayout?['dy1'] as num?)?.toDouble() ?? .34;
+  late double dy2 = (widget.initialLayout?['dy2'] as num?)?.toDouble() ?? .68;
 
   void _resetView() {
     setState(() {
@@ -40,6 +40,7 @@ class _MaketViewState extends State<MaketView> {
       dy1 = .34;
       dy2 = .68;
     });
+    widget.onLayoutChanged?.call(dx1, dy1, dy2);
   }
 
   void _dragDivider(Offset local, Size canvasSize, double l, double w) {
@@ -58,6 +59,7 @@ class _MaketViewState extends State<MaketView> {
     } else if (dHoriz2 < threshold) {
       setState(() => dy2 = (((local.dy - rect.top) / rect.height)).clamp(dy1 + .12, .88));
     }
+    widget.onLayoutChanged?.call(dx1, dy1, dy2);
   }
 
   @override

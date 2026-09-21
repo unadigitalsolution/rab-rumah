@@ -97,6 +97,10 @@ class _AppState extends State<RabRumahApp> {
           setState(() => projects.removeAt(index));
           _save();
         },
+        onUpdate: (index, updated) {
+          setState(() => projects[index] = updated);
+          _save();
+        },
         onNew: () => nav(1),
       ),
       MaterialPageX(
@@ -369,7 +373,6 @@ class _EditorState extends State<EditorPage> {
   int windows = 5;
   int bathrooms = 1;
   int tab = 0;
-  bool topView = true;
   String wall = 'lightbrick';
   String floor = 'tile';
   String roof = 'genteng';
@@ -572,11 +575,7 @@ class _EditorState extends State<EditorPage> {
           const SizedBox(height: 4),
           RabItemsTable(items: (result['items'] as List).cast<JsonMap>()),
         ] else ...[
-          MaketView(
-            result: result,
-            topView: topView,
-            onTop: () => setState(() => topView = !topView),
-          ),
+          MaketView(result: result),
         ],
         const SizedBox(height: 20),
         Row(
@@ -778,11 +777,13 @@ class ProjectsPage extends StatelessWidget {
     super.key,
     required this.projects,
     required this.onDelete,
+    required this.onUpdate,
     required this.onNew,
   });
 
   final List<JsonMap> projects;
   final void Function(int) onDelete;
+  final void Function(int, JsonMap) onUpdate;
   final VoidCallback onNew;
 
   @override
@@ -815,10 +816,71 @@ class ProjectsPage extends StatelessWidget {
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () => onDelete(entry.key),
                     ),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProjectDetailPage(
+                          project: entry.value,
+                          onUpdate: (updated) => onUpdate(entry.key, updated),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
       ],
+    );
+  }
+}
+
+class ProjectDetailPage extends StatefulWidget {
+  const ProjectDetailPage({super.key, required this.project, required this.onUpdate});
+
+  final JsonMap project;
+  final ValueChanged<JsonMap> onUpdate;
+
+  @override
+  State<ProjectDetailPage> createState() => _ProjectDetailState();
+}
+
+class _ProjectDetailState extends State<ProjectDetailPage> {
+  late JsonMap project = Map<String, dynamic>.from(widget.project);
+
+  void _saveLayout(double dx1, double dy1, double dy2) {
+    project = Map<String, dynamic>.from(project)
+      ..['layout'] = {'dx1': dx1, 'dy1': dy1, 'dy2': dy2};
+    widget.onUpdate(project);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rab = Map<String, dynamic>.from(project['rab'] as Map);
+    final summary = Map<String, dynamic>.from(rab['summary'] as Map);
+    return Scaffold(
+      appBar: AppBar(title: Text('${project['name'] ?? 'Proyek'}')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text('Pemilik: ${project['owner'] ?? '-'} • ${project['location'] ?? '-'}'),
+          const SizedBox(height: 4),
+          Text('${project['area'] ?? 0} m² • ${money((project['total'] as num?) ?? 0)}',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          MaketView(
+            result: rab,
+            initialLayout: (project['layout'] as Map?)?.cast<String, dynamic>(),
+            onLayoutChanged: _saveLayout,
+          ),
+          const SizedBox(height: 20),
+          Text('Ringkasan RAB', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          SummaryTable(summary: summary),
+          const SizedBox(height: 16),
+          Text('Rincian Barang & Upah (${(rab['items'] as List).length} item)',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          RabItemsTable(items: (rab['items'] as List).cast<JsonMap>()),
+        ],
+      ),
     );
   }
 }
