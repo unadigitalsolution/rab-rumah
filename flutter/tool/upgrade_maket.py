@@ -18,9 +18,13 @@ replacement = r'''class MaketView extends StatefulWidget {
 class _MaketViewState extends State<MaketView> {
   int mode = 0; // 0 = 2D, 1 = 3D
   bool roofVisible = true;
+  bool editMode = false;
   double azimuth = -0.62;
   double elevation = .62;
   double zoom = 1.0;
+  double dx1 = .50; // room divider fractions, user-editable in 2D mode
+  double dy1 = .34;
+  double dy2 = .68;
 
   void _resetView() {
     setState(() {
@@ -30,8 +34,37 @@ class _MaketViewState extends State<MaketView> {
     });
   }
 
+  void _resetLayout() {
+    setState(() {
+      dx1 = .50;
+      dy1 = .34;
+      dy2 = .68;
+    });
+  }
+
+  void _dragDivider(Offset local, Size canvasSize, double l, double w) {
+    final rect = FloorPlan2DPainter.rectFor(canvasSize, l, w);
+    final x1 = rect.left + rect.width * dx1;
+    final y1 = rect.top + rect.height * dy1;
+    final y2 = rect.top + rect.height * dy2;
+    final dHoriz1 = (local.dy - y1).abs();
+    final dHoriz2 = (local.dy - y2).abs();
+    final dVert = (local.dx - x1).abs();
+    const threshold = 26.0;
+    if (dVert < threshold && dVert <= dHoriz1 && dVert <= dHoriz2) {
+      setState(() => dx1 = (((local.dx - rect.left) / rect.width)).clamp(.25, .75));
+    } else if (dHoriz1 < threshold && dHoriz1 <= dHoriz2) {
+      setState(() => dy1 = (((local.dy - rect.top) / rect.height)).clamp(.14, dy2 - .12));
+    } else if (dHoriz2 < threshold) {
+      setState(() => dy2 = (((local.dy - rect.top) / rect.height)).clamp(dy1 + .12, .88));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final geometry = Map<String, dynamic>.from(widget.result['geometry'] as Map);
+    final l = (geometry['length'] as num).toDouble();
+    final w = (geometry['width'] as num).toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -49,14 +82,10 @@ class _MaketViewState extends State<MaketView> {
         if (mode == 0)
           Row(
             children: [
-              const Icon(Icons.layers_clear_outlined, size: 18),
+              const Icon(Icons.edit_outlined, size: 18),
               const SizedBox(width: 6),
-              const Expanded(child: Text('Denah 2D • tampak atas tanpa genteng')),
-              IconButton(
-                tooltip: 'Reset tampilan',
-                onPressed: () => setState(() {}),
-                icon: const Icon(Icons.refresh),
-              ),
+              const Expanded(child: Text('Mode edit denah (geser garis sekat)')),
+              Switch(value: editMode, onChanged: (v) => setState(() => editMode = v)),
             ],
           )
         else
@@ -72,15 +101,23 @@ class _MaketViewState extends State<MaketView> {
           child: Card(
             clipBehavior: Clip.antiAlias,
             child: mode == 0
-                ? InteractiveViewer(
-                    minScale: .5,
-                    maxScale: 5,
-                    boundaryMargin: const EdgeInsets.all(80),
-                    child: CustomPaint(
-                      size: const Size(380, 420),
-                      painter: FloorPlan2DPainter(widget.result),
-                    ),
-                  )
+                ? (editMode
+                    ? GestureDetector(
+                        onPanUpdate: (d) => _dragDivider(d.localPosition, const Size(380, 420), l, w),
+                        child: CustomPaint(
+                          size: const Size(380, 420),
+                          painter: FloorPlan2DPainter(widget.result, dx1, dy1, dy2, editable: true),
+                        ),
+                      )
+                    : InteractiveViewer(
+                        minScale: .5,
+                        maxScale: 5,
+                        boundaryMargin: const EdgeInsets.all(80),
+                        child: CustomPaint(
+                          size: const Size(380, 420),
+                          painter: FloorPlan2DPainter(widget.result, dx1, dy1, dy2),
+                        ),
+                      ))
                 : GestureDetector(
                     onScaleUpdate: (details) => setState(() {
                       azimuth += details.focalPointDelta.dx * .009;
@@ -92,7 +129,7 @@ class _MaketViewState extends State<MaketView> {
                         scale: zoom,
                         child: CustomPaint(
                           size: const Size(380, 420),
-                          painter: House3DPainter(widget.result, roofVisible, azimuth, elevation),
+                          painter: House3DPainter(widget.result, roofVisible, azimuth, elevation, dx1, dy1, dy2),
                         ),
                       ),
                     ),
@@ -100,9 +137,22 @@ class _MaketViewState extends State<MaketView> {
           ),
         ),
         const SizedBox(height: 8),
-        if (mode == 0)
-          const Text('Pinch untuk zoom • geser untuk melihat seluruh denah • ukuran mengikuti dimensi proyek.')
-        else ...[
+        if (mode == 0) ...[
+          Text(editMode
+              ? 'Seret garis sekat (titik biru) untuk mengubah ukuran ruangan sesuai keinginan.'
+              : 'Pinch untuk zoom • geser untuk melihat seluruh denah • aktifkan mode edit untuk mengubah ukuran ruangan.'),
+          if (editMode) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _resetLayout,
+                icon: const Icon(Icons.undo),
+                label: const Text('Kembalikan denah ke default'),
+              ),
+            ),
+          ],
+        ] else ...[
           const Text('Seret jari untuk memutar rumah • cubit dua jari untuk zoom • matikan genteng untuk lihat interior.'),
           const SizedBox(height: 10),
           SizedBox(
@@ -120,20 +170,30 @@ class _MaketViewState extends State<MaketView> {
 }
 
 class FloorPlan2DPainter extends CustomPainter {
-  const FloorPlan2DPainter(this.result);
+  const FloorPlan2DPainter(this.result, this.dx1, this.dy1, this.dy2, {this.editable = false});
   final JsonMap result;
+  final double dx1;
+  final double dy1;
+  final double dy2;
+  final bool editable;
+
+  static Rect rectFor(Size size, double l, double w) {
+    final scale = math.min((size.width - 70) / l, (size.height - 100) / w);
+    final rw = l * scale;
+    final rh = w * scale;
+    final left = (size.width - rw) / 2;
+    const top = 42.0;
+    return Rect.fromLTWH(left, top, rw, rh);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     final geometry = Map<String, dynamic>.from(result['geometry'] as Map);
     final l = (geometry['length'] as num).toDouble();
     final w = (geometry['width'] as num).toDouble();
-    final scale = math.min((size.width - 70) / l, (size.height - 100) / w);
-    final rw = l * scale;
-    final rh = w * scale;
-    final left = (size.width - rw) / 2;
-    final top = 42.0;
-    final rect = Rect.fromLTWH(left, top, rw, rh);
+    final rect = rectFor(size, l, w);
+    final rw = rect.width;
+    final rh = rect.height;
 
     final bg = Paint()..color = const Color(0xFFF8FAFC);
     canvas.drawRect(Offset.zero & size, bg);
@@ -141,6 +201,7 @@ class FloorPlan2DPainter extends CustomPainter {
     final grid = Paint()
       ..color = const Color(0xFFE2E8F0)
       ..strokeWidth = .7;
+    final scale = math.min(rw / l, rh / w);
     for (double x = rect.left; x <= rect.right; x += math.max(10, scale)) {
       canvas.drawLine(Offset(x, rect.top), Offset(x, rect.bottom), grid);
     }
@@ -172,14 +233,31 @@ class FloorPlan2DPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
 
-    // A useful starter layout, kept proportional to the project rectangle.
-    final x1 = rect.left + rect.width * .50;
-    final y1 = rect.top + rect.height * .34;
-    final y2 = rect.top + rect.height * .68;
+    // Room dividers — user-editable fractions of the building rectangle.
+    final x1 = rect.left + rect.width * dx1;
+    final y1 = rect.top + rect.height * dy1;
+    final y2 = rect.top + rect.height * dy2;
     canvas.drawLine(Offset(x1, rect.top), Offset(x1, y2), inner);
     canvas.drawLine(Offset(rect.left, y1), Offset(rect.right, y1), inner);
     canvas.drawLine(Offset(rect.left, y2), Offset(x1, y2), inner);
     canvas.drawLine(Offset(x1, y2), Offset(x1, rect.bottom), inner);
+
+    if (editable) {
+      final handle = Paint()..color = const Color(0xFF2563EB);
+      final handleRing = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2;
+      for (final hp in [
+        Offset(x1, rect.top + (y2 - rect.top) / 2),
+        Offset(rect.left + rect.width * .25, y1),
+        Offset(rect.right - rect.width * .25, y1),
+        Offset(rect.left + (x1 - rect.left) / 2, y2),
+      ]) {
+        canvas.drawCircle(hp, 9, handle);
+        canvas.drawCircle(hp, 9, handleRing);
+      }
+    }
 
     // Door openings / swing arcs.
     final door = Paint()
@@ -194,7 +272,7 @@ class FloorPlan2DPainter extends CustomPainter {
 
     // Front entrance door + small porch, drawn on the south (bottom) wall.
     final porch = Paint()..color = const Color(0xFFE2E8F0);
-    final porchRect = Rect.fromLTWH(rect.left + rw * .30, rect.bottom, rw * .18, math.min(28, rh * .08));
+    final porchRect = Rect.fromLTWH(rect.left + rw * .28, rect.bottom, rw * .24, math.min(34, rh * .10));
     canvas.drawRect(porchRect, porch);
     canvas.drawRect(porchRect, roofOutline);
 
@@ -206,12 +284,12 @@ class FloorPlan2DPainter extends CustomPainter {
     canvas.drawLine(Offset(rect.right - rw * .32, rect.bottom), Offset(rect.right - rw * .18, rect.bottom), win);
     canvas.drawLine(Offset(rect.right, rect.top + rh * .52), Offset(rect.right, rect.top + rh * .64), win);
 
-    _label(canvas, 'DAPUR', Offset(rect.left + rw * .25, rect.top + rh * .17), 14);
-    _label(canvas, 'KM / WC', Offset(rect.left + rw * .75, rect.top + rh * .17), 12);
-    _label(canvas, 'KAMAR 02', Offset(rect.left + rw * .25, rect.top + rh * .49), 13);
-    _label(canvas, 'RUANG KELUARGA', Offset(rect.left + rw * .75, rect.top + rh * .48), 12);
-    _label(canvas, 'RUANG TAMU', Offset(rect.left + rw * .25, rect.top + rh * .82), 13);
-    _label(canvas, 'KAMAR 01', Offset(rect.left + rw * .75, rect.top + rh * .82), 13);
+    _label(canvas, 'DAPUR', Offset(rect.left + rect.width * dx1 * .5, rect.top + rect.height * dy1 * .5), 14);
+    _label(canvas, 'KM / WC', Offset(x1 + (rect.right - x1) * .5, rect.top + rect.height * dy1 * .5), 12);
+    _label(canvas, 'KAMAR 02', Offset(rect.left + rect.width * dx1 * .5, y1 + (y2 - y1) * .35), 13);
+    _label(canvas, 'RUANG KELUARGA', Offset(x1 + (rect.right - x1) * .5, y1 + (rect.bottom - y1) * .32), 12);
+    _label(canvas, 'RUANG TAMU', Offset(rect.left + rect.width * dx1 * .5, y2 + (rect.bottom - y2) * .5), 13);
+    _label(canvas, 'KAMAR 01', Offset(x1 + (rect.right - x1) * .5, y2 + (rect.bottom - y2) * .58), 13);
     _label(canvas, 'TERAS', Offset(porchRect.center.dx, porchRect.center.dy), 10);
 
     _dimension(canvas, Offset(rect.left, rect.bottom + 24), Offset(rect.right, rect.bottom + 24), '${l.toStringAsFixed(2)} m');
@@ -223,6 +301,7 @@ class FloorPlan2DPainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(text: text, style: TextStyle(color: const Color(0xFF0F172A), fontSize: size, fontWeight: FontWeight.w700)),
       textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
     )..layout(maxWidth: 150);
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
@@ -239,15 +318,23 @@ class FloorPlan2DPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant FloorPlan2DPainter oldDelegate) => oldDelegate.result != result;
+  bool shouldRepaint(covariant FloorPlan2DPainter oldDelegate) =>
+      oldDelegate.result != result ||
+      oldDelegate.dx1 != dx1 ||
+      oldDelegate.dy1 != dy1 ||
+      oldDelegate.dy2 != dy2 ||
+      oldDelegate.editable != editable;
 }
 
 class House3DPainter extends CustomPainter {
-  const House3DPainter(this.result, this.roofVisible, this.azimuth, this.elevation);
+  const House3DPainter(this.result, this.roofVisible, this.azimuth, this.elevation, this.dx1, this.dy1, this.dy2);
   final JsonMap result;
   final bool roofVisible;
   final double azimuth;
   final double elevation;
+  final double dx1;
+  final double dy1;
+  final double dy2;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -307,7 +394,7 @@ class House3DPainter extends CustomPainter {
 
     // Room zones (same layout as the 2D denah) tinted onto the floor so the
     // cutaway view reads as real rooms, not an empty box.
-    final rx1 = l * .50, ry1 = w * .34, ry2 = w * .68;
+    final rx1 = l * dx1, ry1 = w * dy1, ry2 = w * dy2;
     final zoneColors = <List<double>, Color>{
       [0, 0, rx1, ry1]: const Color(0xFFFDE8D2), // DAPUR
       [rx1, 0, l, ry1]: const Color(0xFFD7ECF5), // KM/WC
@@ -355,14 +442,15 @@ class House3DPainter extends CustomPainter {
       _label(canvas, 'DAPUR', iso(rx1 * .5, ry1 * .5, partH + 6), 10);
       _label(canvas, 'KM/WC', iso((rx1 + l) * .5, ry1 * .5, partH + 6), 9);
       _label(canvas, 'KAMAR 02', iso(rx1 * .5, (ry1 + ry2) * .5, partH + 6), 10);
-      _label(canvas, 'R. KELUARGA', iso((rx1 + l) * .5, (ry1 + w) * .55, partH + 6), 10);
+      _label(canvas, 'R. KELUARGA', iso((rx1 + l) * .5, ry1 + (ry2 - ry1) * .35, partH + 14), 9);
+      _label(canvas, 'KAMAR 01', iso((rx1 + l) * .5, ry2 + (w - ry2) * .55, partH + 6), 9);
       _label(canvas, 'RUANG TAMU', iso(rx1 * .5, (ry2 + w) * .5, partH + 6), 10);
     }
 
     // Terrace / porch slab hugging the south (y = 0) facade, drawn last so it
     // always reads clearly in front of the house, with a step and railing.
-    final td = math.max(.9, l * .16);
-    final tw = l * .45;
+    final td = math.max(1.3, l * .22);
+    final tw = l * .55;
     final stepH = wallH * .12;
     final terr0 = iso(cx - tw / 2, -td, stepH);
     final terr1 = iso(cx + tw / 2, -td, stepH);
