@@ -7,7 +7,7 @@ class RabEngine {
   static const Map<String, List<dynamic>> materials = {
     'cement': ['Semen 50 kg', 'zak', 75000.0], 'sand': ['Pasir pasang', 'm3', 275000.0], 'split': ['Batu split', 'm3', 325000.0], 'riverstone': ['Batu kali', 'm3', 300000.0],
     'rebar10': ['Besi beton 10 mm', 'kg', 16000.0], 'rebar12': ['Besi beton 12 mm', 'kg', 16500.0], 'brick': ['Bata merah', 'pcs', 1400.0], 'lightbrick': ['Bata ringan 60x20x10', 'pcs', 10500.0],
-    'mortar': ['Mortar instan', 'kg', 3500.0], 'tile': ['Keramik 60x60', 'm2', 115000.0], 'granite': ['Granit 60x60', 'm2', 225000.0], 'gypsum': ['Papan gypsum 9 mm', 'm2', 95000.0],
+    'mortar': ['Mortar instan', 'kg', 3500.0], 'tile': ['Keramik 60x60', 'm2', 115000.0], 'granite': ['Granit 60x60', 'm2', 225000.0], 'marble': ['Marmer 60x60', 'm2', 450000.0], 'gypsum': ['Papan gypsum 9 mm', 'm2', 95000.0],
     'grc': ['Papan GRC', 'm2', 115000.0], 'ceilingframe': ['Rangka plafon hollow', 'm', 32000.0], 'roof': ['Genteng beton', 'm2', 85000.0], 'roofmetal': ['Spandek', 'm2', 115000.0],
     'lightsteel': ['Rangka baja ringan', 'm2', 175000.0], 'insulation': ['Insulasi atap', 'm2', 60000.0], 'ridge': ['Nok atap', 'm', 50000.0], 'gutter': ['Talang', 'm', 95000.0],
     'door': ['Pintu + kusen standar', 'unit', 1900000.0], 'window': ['Jendela aluminium + kaca', 'unit', 1450000.0], 'primer': ['Cat dasar', 'liter', 65000.0], 'paintin': ['Cat interior', 'liter', 85000.0], 'paintout': ['Cat eksterior', 'liter', 95000.0],
@@ -37,7 +37,7 @@ class RabEngine {
     if (materialWaste is Map && materialWaste[id] != null) return pct(materialWaste[id]);
     final waste = p['waste'];
     if (waste is! Map) return 0;
-    if (id == 'tile' || id == 'granite') return pct(waste['tile']);
+    if (id == 'tile' || id == 'granite' || id == 'marble') return pct(waste['tile']);
     if (id == 'paintin' || id == 'paintout' || id == 'primer') return pct(waste['paint']);
     if (id == 'roof' || id == 'roofmetal' || id == 'lightsteel' || id == 'insulation') return pct(waste['roof']);
     if (id == 'brick' || id == 'lightbrick') return pct(waste['brick']);
@@ -78,7 +78,7 @@ class RabEngine {
     lab('Struktur', 'Beton sloof, kolom & ring balok', concrete, 'm3'); lab('Struktur', 'Pembesian', rebar, 'kg');
     final wallQty = wall == 'brick' ? 65.0 : 8.5; m(wall == 'brick' ? 'brick' : 'lightbrick', wallNet * wallQty, 'pcs', 'Dinding'); m('mortar', wallNet * (wall == 'brick' ? .20 : .15), 'kg', 'Dinding');
     lab('Dinding', 'Pasangan dinding', wallNet, 'm2'); lab('Dinding', 'Plester + aci dua sisi', wallNet * 2, 'm2');
-    m(floor == 'granite' ? 'granite' : 'tile', floorArea, 'm2', 'Lantai'); m('cement', floorArea * .12, 'zak', 'Lantai'); lab('Lantai', 'Pasang lantai', floorArea, 'm2');
+    m(floor == 'marble' ? 'marble' : (floor == 'granite' ? 'granite' : 'tile'), floorArea, 'm2', 'Lantai'); m('cement', floorArea * .12, 'zak', 'Lantai'); lab('Lantai', 'Pasang lantai', floorArea, 'm2');
     m(ceiling == 'grc' ? 'grc' : 'gypsum', floorArea, 'm2', 'Plafon'); m('ceilingframe', floorArea * 3.2, 'm', 'Plafon'); lab('Plafon', 'Pasang plafon', floorArea, 'm2');
     final cover = roof == 'metal' ? 'roofmetal' : 'roof'; m(cover, roofArea, 'm2', 'Atap'); m('lightsteel', roofArea, 'm2', 'Atap'); if (roof == 'genteng') m('insulation', roofArea, 'm2', 'Atap'); m('ridge', l * .9, 'm', 'Atap'); m('gutter', perimeter * .35, 'm', 'Atap'); lab('Atap', 'Rangka & penutup atap', roofArea, 'm2');
     m('door', doors.toDouble(), 'unit', 'Kusen/Pintu/Jendela'); m('window', windows.toDouble(), 'unit', 'Kusen/Pintu/Jendela'); lab('Kusen/Pintu/Jendela', 'Pemasangan pintu & jendela', (doors + windows).toDouble(), 'unit');

@@ -454,6 +454,18 @@ class _EditorState extends State<EditorPage> {
     List<String> values,
     ValueChanged<String> setter,
   ) {
+    const labels = {
+      'lightbrick': 'Bata ringan (hebel)',
+      'brick': 'Bata merah',
+      'batako': 'Batako',
+      'tile': 'Keramik',
+      'granite': 'Granit',
+      'marble': 'Marmer',
+      'genteng': 'Genteng beton',
+      'spandek': 'Atap spandek',
+      'gypsum': 'Plafon gypsum',
+      'grc': 'Plafon GRC',
+    };
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
@@ -463,7 +475,7 @@ class _EditorState extends State<EditorPage> {
           border: const OutlineInputBorder(),
         ),
         items: values
-            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+            .map((item) => DropdownMenuItem(value: item, child: Text(labels[item] ?? item)))
             .toList(),
         onChanged: (item) {
           if (item != null) setter(item);
@@ -557,7 +569,7 @@ class _EditorState extends State<EditorPage> {
           ),
         ] else if (tab == 2) ...[
           selectBox('Dinding', wall, ['lightbrick', 'brick', 'batako'], (v) => setState(() => wall = v)),
-          selectBox('Lantai', floor, ['tile', 'granite'], (v) => setState(() => floor = v)),
+          selectBox('Lantai', floor, ['tile', 'granite', 'marble'], (v) => setState(() => floor = v)),
           selectBox('Atap', roof, ['genteng', 'metal'], (v) => setState(() => roof = v)),
           selectBox('Plafon', ceiling, ['gypsum', 'grc'], (v) => setState(() => ceiling = v)),
           Row(

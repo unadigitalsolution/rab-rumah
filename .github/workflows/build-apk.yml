@@ -19,6 +19,11 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Pakai debug keystore tetap (biar update APK tidak minta uninstall)
+        run: |
+          mkdir -p ~/.android
+          cp ci/debug.keystore ~/.android/debug.keystore
+
       - name: Generate Android platform
         working-directory: flutter
         run: flutter create . --platforms=android --org com.unadigitalsolution --project-name rab_rumahku
