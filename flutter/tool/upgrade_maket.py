@@ -445,12 +445,12 @@ class House3DPainter extends CustomPainter {
       wallSeg(0, ry1, l, ry1);
       wallSeg(0, ry2, rx1, ry2);
       wallSeg(rx1, ry2, rx1, w);
-      _label(canvas, 'DAPUR', isoLabel(rx1 * .5, ry1 * .35, partH + 2), 9);
-      _label(canvas, 'KM/WC', isoLabel((rx1 + l) * .5, ry1 * .35, partH + 2), 8);
-      _label(canvas, 'KAMAR 02', isoLabel(rx1 * .5, (ry1 + ry2) * .5, partH + 10), 9);
-      _label(canvas, 'R. KELUARGA', isoLabel((rx1 + l) * .5, ry1 + (ry2 - ry1) * .5, partH + 18), 8);
-      _label(canvas, 'KAMAR 01', isoLabel((rx1 + l) * .5, ry2 + (w - ry2) * .65, partH + 24), 8);
-      _label(canvas, 'RUANG TAMU', isoLabel(rx1 * .5, (ry2 + w) * .5, partH + 32), 9);
+      _label(canvas, 'DAPUR', isoLabel(rx1 * .5, ry1 * .5, .02), 9);
+      _label(canvas, 'KM/WC', isoLabel((rx1 + l) * .5, ry1 * .5, .02), 8);
+      _label(canvas, 'KAMAR 02', isoLabel(rx1 * .5, (ry1 + ry2) * .5, .02), 9);
+      _label(canvas, 'R. KELUARGA', isoLabel((rx1 + l) * .5, ry1 + (ry2 - ry1) * .5, .02), 8);
+      _label(canvas, 'KAMAR 01', isoLabel((rx1 + l) * .5, ry2 + (w - ry2) * .5, .02), 8);
+      _label(canvas, 'RUANG TAMU', isoLabel(rx1 * .5, (ry2 + w) * .5, .02), 9);
     }
 
     // Terrace / porch slab hugging the south (y = 0) facade, drawn last so it
